@@ -1,0 +1,29 @@
+name: Release
+
+# Pushing a tag such as 0.1.0 (no leading v) makes a draft release with the three files
+# Obsidian needs. The tag has to match the version in manifest.json.
+on:
+  push:
+    tags:
+      - "*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check the tag matches manifest.json
+        run: |
+          v=$(python3 -c "import json;print(json.load(open('manifest.json'))['version'])")
+          if [ "$v" != "${GITHUB_REF_NAME}" ]; then echo "Tag ${GITHUB_REF_NAME} does not match manifest version $v"; exit 1; fi
+      - name: Check styles.css is built from its sources
+        run: python3 tools/build_styles.py --check
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" main.js manifest.json styles.css \
+            --title "${GITHUB_REF_NAME}" --draft --notes "See CHANGELOG.md."

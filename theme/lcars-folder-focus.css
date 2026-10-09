@@ -1,0 +1,213 @@
+/* ============================================================
+   LCARS — FOLDER FOCUS
+   Recede every other top-level folder while one is open, so the
+   branch you are reading stands out. Nothing collapses, nothing
+   moves: the others' coloured ground is simply overwritten with
+   the LCARS panel-gray (#1E2229). Their text and icon take the
+   folder's own colour (the one the ground gave up), so every
+   folder stays identifiable.
+
+   The selected row is left alone (active-item exception).
+
+   Companion to lcars-frame.css and lcars-nn-rows.css. Sits on
+   top of Colorful Folders. Scope: Notebook Navigator. The core
+   File Explorer / Bookmarks tree is NOT handled here (NOTE 4).
+
+   Toggle: Style Manager > LCARS Palette > "Folder focus - off". Off = zero effect.
+   Off = zero effect. Reversible at any time.
+   ============================================================ */
+
+/* ------------------------------------------------------------
+   NEEDS
+     - Notebook Navigator and LCARS Core (--lcars-row-bg, --lcars-fade-dur, --lcars-fade-ease).
+     - Colorful Folders for the folder colors that recede.
+     - Colorful Folders 5.0.7 or newer, which sets --cf-color on each row; without it the receded text uses the fallback gray.
+   WITHOUT IT
+     - Without Notebook Navigator: no effect.
+     - Without --cf-color from Colorful Folders: folders still recede, but text and icons lose their own color.
+   TOGGLE   Style Manager > LCARS Palette > "Folder focus - off". Off = zero effect.
+   RELEASE  v0.2 (leaves with Notebook Navigator). Its :has() gate is an open performance item (review F6).
+   ------------------------------------------------------------ */
+
+/* ─────────────────────────────────────────────
+   1. KNOBS
+   ───────────────────────────────────────────── */
+body {
+  /* The neutral ground the receded folders fall back to. Defaults
+     to --lcars-row-bg, which is the LCARS panel-gray (#1E2229) —
+     the same value the palette labels "panel-gray" for its
+     calendar / status / rail pickers. Point it at
+     --lcars-calendar-bg instead if you would rather it track the
+     picker whose description literally reads "panel-gray". */
+  --lcars-focus-bg: var(--lcars-row-bg);
+
+  /* The text and icon are deliberately left alone: they keep their
+     full Colorful Folders colour, so the receded folders stay
+     readable. Only the ground is neutralised. */
+}
+
+/* ─────────────────────────────────────────────
+   2. THE GATE — recede only while a folder is open
+   :has() asks whether any top-level row is expanded. The rule in
+   section 3 carries it, so when nothing is open it does not exist
+   at all and the sidebar looks untouched.
+
+   The [data-path="/"] exclusion is load-bearing: Notebook
+   Navigator keeps the VAULT ROOT row permanently expanded, so
+   without it the gate is always true and the sidebar recedes
+   forever. If this file ever "does nothing" or "never stops",
+   that is the line.
+   ───────────────────────────────────────────── */
+
+/* ─────────────────────────────────────────────
+   3. TOP-LEVEL FOLDERS
+   Notebook Navigator virtualizes its tree: every row is a FLAT
+   sibling inside .nn-virtual-nav-item, so "top-level" cannot be
+   expressed structurally. It is expressed by the path instead:
+   a top-level folder's data-path has no slash ("Areas"), a
+   nested one always has ("Areas/Work"), and the vault-root row
+   is "/". So :not([data-path*="/"]) picks exactly the top-level
+   folders in ANY vault, with no list to maintain.
+   (2026-10-06: replaced a hard-coded list of the author's folders.)
+
+   Both rules exclude the expanded folder (:not([aria-expanded="true"]))
+   and the selected row (:not(.nn-selected)) — see NOTE 3 — so
+   anything you are actively reading stays at full strength.
+   ───────────────────────────────────────────── */
+
+/* 3a. Fade. Colorful Folders emits its own `transition: … !important`
+   for every colored folder and OMITS filter, which beats a snippet's
+   plain declaration. This rule outranks CF's with the doubled classes.
+   No path list and NO gate: putting the transition on every nav row is
+   harmless, and keeping it ungated is what lets the ground fade OUT
+   again when the last folder closes and the rule in 3b stops matching.
+
+   2026-10-03, the author: this was the seam. The ground faded at 0.2s while
+   the brightness lift on the same row (NN Rows §8) ran at 120ms, so
+   hovering a colored folder finished its text at 120ms and then kept
+   moving its fill for another 80. All five properties now read the one
+   pair in lcars-frame.css §0, ground and filter together. */
+body .notebook-navigator.notebook-navigator .nn-navitem.nn-navitem:not(.nn-header) {
+  transition:
+    background-color var(--lcars-fade-dur, 120ms) var(--lcars-fade-ease, linear),
+    opacity var(--lcars-fade-dur, 120ms) var(--lcars-fade-ease, linear),
+    box-shadow var(--lcars-fade-dur, 120ms) var(--lcars-fade-ease, linear),
+    border-color var(--lcars-fade-dur, 120ms) var(--lcars-fade-ease, linear),
+    filter var(--lcars-fade-dur, 120ms) var(--lcars-fade-ease, linear) !important;
+}
+
+/* 3b. Recede the ground to panel-gray. Colorful Folders paints the
+   heat fill as the row's own background-color, so overwriting it is
+   all that is needed — there is no gradient layer to hide. */
+body:not(.lcars-folder-focus-off) .notebook-navigator:has(.nn-navitem.nn-folder[aria-expanded="true"]:not([data-path="/"]))
+  .nn-navitem.nn-navitem.nn-folder:not([data-path*="/"]):not(.nn-header):not(.nn-selected):not([aria-expanded="true"]) {
+  background-color: var(--lcars-focus-bg) !important;
+}
+
+/* 3c. The receded folder's text, icon and chevron take the colour its ground
+   just gave up (--cf-color, written onto each row by
+   Colorful Folders). The panel-gray row then reads as a quiet echo
+   of the coloured one. A folder CF excludes has no --cf-color and
+   falls back to the theme gray. The extra :root:root outranks the
+   auto-contrast name/icon rules in lcars-frame.css. */
+html:root:root body:not(.lcars-folder-focus-off) .notebook-navigator:has(.nn-navitem.nn-folder[aria-expanded="true"]:not([data-path="/"]))
+  .nn-navitem.nn-navitem.nn-folder:not([data-path*="/"]):not(.nn-header):not(.nn-selected):not([aria-expanded="true"]) :is(.nn-navitem-name, .nn-navitem-icon, .nn-navitem-chevron, .nn-navitem-chevron .svg-icon) {
+  /* Lifted to a minimum lightness: the dark folders (People, Inbox) took a
+     color equal to, or barely off, the gray ground and vanished. */
+  color: oklch(from var(--cf-color, #9EA5BA) max(l, calc(var(--lcars-focus-ink-floor, 70) / 100)) c h) !important;
+  --icon-color: oklch(from var(--cf-color, #9EA5BA) max(l, calc(var(--lcars-focus-ink-floor, 70) / 100)) c h) !important;
+}
+
+/* 3d. Custom icons. Colorful Folders draws a folder's custom icon as a
+   MASK on .nn-navitem-icon, painted with background-color in a lighter
+   tint of the folder colour at 0.5-0.85 opacity, so `color` never
+   reaches it and the icon read paler than the text. Paint the mask
+   with the folder colour at full strength. A folder with no
+   --cf-color has a plain SVG icon, not a mask, so it falls back to
+   transparent and no square is painted behind it. */
+html:root:root body:not(.lcars-folder-focus-off) .notebook-navigator:has(.nn-navitem.nn-folder[aria-expanded="true"]:not([data-path="/"]))
+  .nn-navitem.nn-navitem.nn-folder:not([data-path*="/"]):not(.nn-header):not(.nn-selected):not([aria-expanded="true"]) .nn-navitem-icon {
+  background-color: oklch(from var(--cf-color, transparent) max(l, calc(var(--lcars-focus-ink-floor, 70) / 100)) c h) !important;
+  opacity: 1 !important;
+}
+
+/* ============================================================
+   NOTES
+
+   1. WHY NOT data-level? (and why the path test works)
+      In the author's vault the vault-root row is shown, which pushes the
+      real top-level folders to data-level="1" (not 0). A
+      data-level selector would also break the moment "show root
+      folder" is toggled in Notebook Navigator. A path with no
+      slash is immune to both.
+
+   2. WHY NOT A DOM OBSERVER?
+      Notebook Navigator recycles rows while scrolling, so writing
+      a class onto a row is fragile. aria-expanded lives on the
+      row and survives recycling, so this needs no observer, no
+      DOM writes, and no plugin change.
+
+   3. ACTIVE-ITEM EXCEPTION — :not(.nn-selected)
+      The selected row (NN's black panel plus its 1px border)
+      keeps its look at full strength while everything around it
+      recedes. Files are never touched by this snippet — it names
+      folder rows only — so in practice this is about the selected
+      FOLDER, including the folder of the note you are reading,
+      which NN renders as selected.
+
+   4. CORE FILE EXPLORER / BOOKMARKS — NOT COVERED.
+      Their trees ARE nested, so they need none of this machinery.
+      Worth adding if wanted; kept out for now so this snippet has
+      one mechanism to reason about.
+
+   5. KNOWN EDGE: virtualization.
+      An open folder scrolled out of the viewport leaves the DOM,
+      so the gate can stop matching mid-scroll and the recede may
+      relax. Unverified in a long, scrolled tree. If it flickers,
+      the fix is a different mechanism (CF writing a class), not a
+      tweak here.
+
+   6. WHY PANEL-GRAY, NOT A BRIGHTNESS FILTER.
+      The earlier cut multiplied brightness toward black. That darkened
+      every row without changing what it *was*: the heat fills stayed
+      distinct, and a dark folder (Projects / Archive are already
+      rgb(28,60,85)) barely moved. Overwriting the ground to one neutral
+      panel-gray makes every receded folder identical, while the text and
+      icon keep their full Colorful Folders colour — so each folder stays
+      identifiable at a glance. The selected row and the open folder are
+      the only things left with a coloured GROUND.
+
+   7. INTERACTION WITH COLORFUL FOLDERS
+      CF emits, per colored folder, a `transition: … !important`
+      listing background-color/opacity/box-shadow/border-color but
+      NOT filter — and !important beats a snippet. Section 3a
+      re-declares that same list (plus filter) with the doubled classes
+      it needs to outrank CF, so the ground change animates rather than
+      snaps. CF's own clock is 0.2s ease; ours is the shared
+      --lcars-fade-dur / --lcars-fade-ease pair (lcars-frame.css §0),
+      which is why CF's timing no longer shows up on hover.
+
+   8. HOVER — DELIBERATE, CHANGE IF UNWANTED.
+      lcars-nn-rows §8 sets `filter: brightness(1.3) !important`
+      on `.nn-navitem[data-path]:hover`. Section 3b sets no filter,
+      so hover still WINS: pointing at a receded folder lifts it
+      bright, and it settles back when the pointer leaves. That reads
+      as a "peek" and matches the theme's existing hover language.
+      To keep hovered folders receded instead, outrank (0,9,2) with
+      the doubled-class trick used in that file — do NOT weaken §8.
+
+   9. THE HOVER CLOCK IS SHARED, BORDERS INCLUDED (2026-10-03).
+      Section 3a and NN Rows §8 used to disagree — 0.2s here, 120ms
+      there — so a colored folder's text landed before its own fill
+      did. Both now read lcars-frame.css §0, as do the two tab rows
+      and the ribbon. border-color and box-shadow are on that clock
+      too, which is what makes the right rail's 2px outline and the
+      ribbon's 1px inset ring fade with their fills instead of
+      snapping against them. Brightness is still NOT shared: 1.3 on
+      rows, 1.15 on ribbon openers, 1.12 on a CF divider. The row's
+      value was 1.5 until 2026-10-03, then 1.18, then 1.3 — see NN
+      Rows §8, which records why all three were wrong and in which
+      direction. The ribbon's 1.15 stays separate on purpose: it
+      answers a different question. So the knob block carries duration
+      and curve only. Do not quietly move a strength into the knob
+      block to "tidy" it. */

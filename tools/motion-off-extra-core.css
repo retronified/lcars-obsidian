@@ -1,0 +1,4 @@
+/* The shared hover and fade clock goes to zero too, including inside the
+   editor panes, which set their own copy of it. */
+body.lcars-motion-off,
+body.lcars-motion-off :is(.markdown-source-view, .markdown-preview-view) { --lcars-fade-dur: 0ms; }

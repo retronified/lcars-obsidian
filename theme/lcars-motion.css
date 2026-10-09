@@ -1,0 +1,1079 @@
+/* ============================================================
+   LCARS MOTION (assembled 2026-10-06)
+   Every animation in one snippet, so motion can be switched off
+   with one toggle. Made from two snippets joined in the order
+   Obsidian loaded them, so the cascade is unchanged:
+     1. LCARS - Ambient Life.css
+     2. LCARS - Ship Life.css
+   Each part keeps its own NEEDS / WITHOUT IT block below.
+   Needs LCARS Core. Release: v0.1.
+   body.lcars-power-reading is an opt-in: nothing sets it automatically.
+   Adding it by hand moves the Power conduit from the ribbon's black gap
+   to the reading-pane bottom bar (see part 2). Those rules are live.
+   (The two source files this was made from are no longer separate.)
+   ============================================================ */
+
+/* ############################################################
+   PART: AMBIENT LIFE: hover and selection feedback (NN rows, Copilot dot, standby light)
+   (source: LCARS - Ambient Life.css)
+   ############################################################ */
+
+/* ============================================================
+   LCARS — AMBIENT LIFE (2026-10-03)
+
+   Slow, breathing animations that make the interface feel alive.
+   Zero JavaScript. Pure @keyframes on elements that already
+   exist. No layout work, no repaint-heavy properties (uses only
+   opacity on box-shadow, never background or width).
+
+   Interaction feedback only: this file answers a hover and a
+   selection. "LCARS - Ship Life.css" (2026-10-05) is the other
+   half and answers the ship's own state — the currents in the
+   frame, the lit ribbon buttons, standby vs. active. Ship Life
+   also dims everything below while you are idle, which is why
+   these three perpetual animations no longer run at full light
+   all the time.
+
+   REMOVED 2026-10-05: the §4 calendar "today" chip breath. See the
+   stub left in its place, and the longer reason in
+   "LCARS - Stardate.css", where the duplicate 3.2s breath on the
+   same cell was removed at the same time.
+
+   Toggle: Style Manager > LCARS Palette > "All motion off".
+   Off = zero effect. Reversible at any time.
+   ============================================================ */
+
+/* ------------------------------------------------------------
+   NEEDS
+     - LCARS Core (palette role --lcars-ribbon-left-bright).
+     - Notebook Navigator: the selected-row pulses target .nn-selected rows.
+     - Colorful Folders for --cf-color on the row pulse.
+   WITHOUT IT
+     - Without Notebook Navigator: the selected-row and standby-light pulses do nothing.
+     - Nothing needs the plugin; this file answers hover and selection only.
+   TOGGLE   Style Manager > LCARS Palette > "All motion off". Off = zero effect.
+   RELEASE  v0.1 (to be merged with Ship Life as the Motion file)
+   ------------------------------------------------------------ */
+
+/* ─────────────────────────────────────────────
+   1–2. SELECTED ROW — double pulse, then slow breathing
+   The visible selected ring is drawn by lcars-frame.css §34 as
+   box-shadow !important on the row, its ::after, and (notes) on
+   .nn-file-content::before. An !important declaration beats any
+   animation, so this draws its own 1px outline on those same layers
+   (outline is not set on them anywhere else) and animates that.
+   Inset by 1px so it lands exactly on the ring: an outline outside the
+   row was clipped by the pane scroller and covered by the next row
+   (DevTools, 2026-10-04). At rest it matches the folder color.
+   ───────────────────────────────────────────── */
+@keyframes lcars-double-pulse {
+  0%, 50%, 100% { outline-color: var(--lcars-pulse-base); }
+  25%, 75%      { outline-color: color-mix(in oklch, var(--lcars-pulse-base) 20%, white); }
+}
+@keyframes lcars-row-breathe {
+  0%, 100% { outline-color: var(--lcars-pulse-base); }
+  50%      { outline-color: color-mix(in oklch, var(--lcars-pulse-base) var(--lcars-pulse-low, 35%), black); }
+}
+
+html:root:root body .notebook-navigator .nn-navitem.nn-selected:not(.nn-header)::after,
+html:root:root body .notebook-navigator .nn-file.nn-selected .nn-file-content::before {
+  /* The folder color, lifted to a minimum lightness: the dark end of the
+     palette (People, Inbox) pulsed to near black and vanished. */
+  --lcars-pulse-base: oklch(from var(--cf-color, #41C4F7) max(l, calc(var(--lcars-pulse-floor, 62) / 100)) c h);
+  outline: 1px solid var(--lcars-pulse-base);
+  outline-offset: -1px;
+  animation: lcars-double-pulse 1.2s ease-in-out 1,
+             lcars-row-breathe 6s ease-in-out 1.2s infinite !important;
+}
+
+/* File Explorer active file */
+@keyframes lcars-fe-pulse {
+  0%, 50%, 100% { outline-color: var(--lcars-ribbon-left-bright, #41C4F7); }
+  25%, 75%      { outline-color: color-mix(in srgb, var(--lcars-ribbon-left-bright, #41C4F7) 13%, white); }
+}
+html:root:root body .mod-left-split .nav-files-container .nav-file-title.is-active {
+  outline: 1px solid var(--lcars-ribbon-left-bright, #41C4F7);
+  animation: lcars-fe-pulse 0.4s ease-in-out 1 !important;
+}
+
+/* ─────────────────────────────────────────────
+   3. COPILOT INDICATOR DOT — slow pulse when visible
+   ───────────────────────────────────────────── */
+@keyframes lcars-dot-breathe {
+  0%, 100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.mod-right-split .tw-absolute.tw-rounded-full,
+[role="menu"] .tw-absolute.tw-rounded-full {
+  animation: lcars-dot-breathe 3s ease-in-out infinite !important;
+}
+
+/* Copilot chat message pulse */
+@keyframes lcars-pulse-slow {
+  0%, 100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+body [data-testid="chat-messages"] .tw-border.tw-border-solid.tw-animate-pulse {
+  animation: lcars-pulse-slow 3s ease-in-out infinite !important;
+}
+
+/* ─────────────────────────────────────────────
+   4. CALENDAR "TODAY" CHIP — PULSE REMOVED 2026-10-05, per the author
+
+   Was a 4s breath on .nn-navigation-calendar-today. Removed together
+   with the 3.2s breath on today's cell in "LCARS - Stardate.css", for
+   two reasons recorded there: the calendar is glanced at rather than
+   used, so a motion cue there fires exactly when nobody is looking; and
+   the two sections were breathing the same cell on 4s and 3.2s at once.
+
+   What is left is the static --nn-theme-calendar-day-today-bg that
+   Notebook Navigator paints itself. That is the answer to the glance,
+   and it does not need to move to be legible.
+   ───────────────────────────────────────────── */
+
+/* ─────────────────────────────────────────────
+   5. STATUS BAR — REMOVED 2026-10-05, the author: "status bar fading is
+      distracting"
+   ─────────────────────────────────────────────
+   Was an idle pulse on the whole .status-bar: opacity 1 → 0.6 at 95% of
+   a 12s cycle, so a 0.6-second dip every twelve seconds, forever. No
+   --lcars-life in it and no body.lcars-idle gate, so it ran identically
+   whether or not the ship was asleep.
+
+   Distracting is the exact word, and the reason is specific rather than
+   general: it faded the ENTIRE bar, not a light on it. The status bar
+   carries the things you read while thinking about something else —
+   word count, cursor position, branch, sync state. A 40% dip in the
+   opacity of text you are reading is a legibility event, and it fired
+   with no cue and no context, twelve seconds in, then twelve seconds
+   after that. Once you notice it, you are waiting for it. Nothing
+   recovers that.
+
+   It was also the worst possible offender against the rule this file's
+   own header states — motion that reports nothing is wallpaper, and
+   wallpaper that loops is worse, because the eye hunts for the reason it
+   stopped mattering. Every other animation here answers something: a
+   hover, a selection, a value change. This one said "powered" to no one
+   in particular, on a 12s loop, on the largest text surface in the
+   frame.
+
+   Same verdict as the right rail's arm sweep, one sitting later, and
+   the second time the answer has been to delete rather than retune. If
+   the status bar ever wants a light, it wants one small indicator for
+   one specific piece of state — a real signal on a small target, not a
+   dim on everything.
+
+   Ship Life's conduit is the counter-example that survives, and the
+   difference is worth keeping straight: it is a light on a strip that
+   carries no text, it runs at full strength, and it never dims. Nothing
+   readable is ever touched by a loop in this theme. */
+
+/* ############################################################
+   PART: SHIP LIFE: the ship's own state (frame currents, ribbon breath, standby dim, readout)
+   (source: LCARS - Ship Life.css)
+   ############################################################ */
+
+/* ============================================================
+   LCARS — SHIP LIFE (2026-10-05)
+
+   The second ambient pass. Companion to "LCARS - Ambient Life.css",
+   which this does NOT replace: that file handles interaction feedback
+   (the selected row's double-pulse, the Copilot dot, the standby
+   light). This one handles the ship's own machinery — the currents in
+   the frame, the lit ribbon buttons breathing, standby vs. active, the
+   scan indicator, and the subsystem readout.
+
+   Companion to the LCARS Companion plugin, which writes the body
+   classes and the subsystem readout. Everything here degrades to
+   a plain still frame if the plugin is off; nothing here is
+   required for the frame to look right.
+
+   WHAT IS AND IS NOT IN HERE, and why
+   ─────────────────────────────────
+   Every moving thing in this file is attached either to a real signal
+   or to a deliberately chosen slow clock:
+
+     • the ribbon breath runs only on .is-visible, which
+       ribbon-roles.js (CustomJS, not in the v0.1 release) derives from the DOM, so it
+       means "this pane is on screen right now" and nothing else
+     • the power conduit runs on a fixed 5.4s and is always lit (§4a)
+
+   The one exception is the conduit, and the exception is the point: it
+   is a light that says the ship has power, so it does not stop saying
+   it. Everything else obeys the rule below.
+
+   There is no permanent spinner anywhere in this file, and that is the
+   discipline. An interface that shows motion all the time reads as
+   DEAD, because uniform motion is indistinguishable from a still
+   image. Standing by quietly and coming alive on input is what makes a
+   machine look like it is running. Two things were cut from this file
+   for breaking exactly that rule — the right rail's arm sweep and the
+   scan that rode on it, both loops reporting nothing (§2, §5).
+
+   REQUIRES @property
+   ─────────────────────────────────
+   §4 needs registered custom properties so a gradient's position and
+   its convergence can share one timeline. That is @property, which is
+   Chromium 85 and later (2020). Obsidian's current Electron is far
+   past it. Without @property the two lines still draw and still
+   converge, but the travel becomes a jump once per cycle instead of a
+   slide — which is why there is no @supports fallback here pretending
+   otherwise. If this ever needs to run somewhere older, the fix is a
+   transform-based version, not a feature query.
+
+   Toggle: Style Manager > LCARS Palette > "All motion off".
+   Off = zero effect. Reversible at any time.
+   ============================================================ */
+
+/* ------------------------------------------------------------
+   NEEDS
+     - LCARS Core (palette roles --lcars-dim, --lcars-readout-fill and others).
+     - The LCARS Companion plugin: it sets body.lcars-idle and body.lcars-busy and builds the .lcars-subsys readout.
+     - ribbon-roles.js (CustomJS) for the ribbon breath on .is-visible, until the ribbon is ported into the plugin.
+   WITHOUT IT
+     - Without the plugin: a still frame; no standby dim, no subsystem readout.
+     - Without CustomJS: the ribbon stays one neutral column and its breath never runs.
+     - body.lcars-power-reading is a manual opt-in (add the class by hand); it moves the Power conduit to the reading-pane bottom bar.
+   TOGGLE   Style Manager > LCARS Palette > "All motion off".
+   RELEASE  v0.1 (to be merged with Ambient Life as the Motion file)
+   ------------------------------------------------------------ */
+
+/* ─────────────────────────────────────────────
+   0. KNOBS
+
+   Life is two multiplicative factors rather than one dial, because the
+   two things that dim the ship are independent and it matters which:
+
+     --lcars-life     standby. 1 while you are working; drops when the
+                      script sees no input for its idle window. The
+                      currents keep RUNNING under it — only their light
+                      drops. A stopped animation reads as a broken
+                      theme; a dim one reads as a ship on standby, which
+                      is the entire idea.
+
+     --lcars-focus    focus. Drops when the window loses focus. That is
+                      the "you are looking at something else now" signal,
+                      and Obsidian already writes it as
+                      body:not(.is-focused), so it costs nothing.
+
+   Everything multiplies both, so a window that is unfocused AND idle
+   lands on the product — which is the correct answer for both, since
+   an unfocused idle window is as quiet as it gets.
+
+   Deliberately NOT inside lcars-frame.css §0. Those are structural and
+   are read by every other snippet; these two are this file's business,
+   and putting them there would let an unrelated hover retune change how
+   the ship dims.
+
+   @property blocks are hoisted above the rules that use them purely so
+   they are findable — they still work anywhere in the file.
+   ───────────────────────────────────────────── */
+
+/* Travel position of the power conduit's gradient, as a share of the
+   element's height. -16% starts the band above the box, 116% ends it
+   below, so it arrives and leaves through transparency and the cycle
+   boundary is invisible. */
+/* Normalised progress through the conduit's cycle, 0 → 1. One number
+   drives both lines, because they are two halves of a single event: the
+   descending line reads it forwards and the ascending line reads it
+   backwards, which is what makes them arrive at the vertical centre at
+   the same instant without two animations that could drift apart. */
+@property --lcars-power-t {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+/* The conduit's own alpha, peaking exactly when the two lines meet. Kept
+   separate from --lcars-life because this one answers a question about
+   the effect ("are they at the centre?") and life answers a different one
+   ("is anyone there?"). */
+@property --lcars-power-o {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+body {
+  --lcars-life: 1;
+  --lcars-focus: 1;
+
+  /* The lit-ribbon breath's two endpoints.
+     These are variables rather than numbers typed into the keyframes
+     specifically so standby can flatten the breath's AMPLITUDE without
+     touching its duration. Changing a duration mid-flight re-maps the
+     animation's progress and the element visibly jumps; changing a
+     custom property that a keyframe interpolates does not. That
+     distinction is the whole reason they live here.
+
+     The breath and the unfocused dim never ran before 2026-10-05: a
+     nested comment in §3 closed that comment early and the leftover
+     text swallowed the @keyframes. 0.82 is kept for visibility, but
+     it was not the fix. Never put a comment inside a comment here. */
+  --lcars-breath-lo: 0.82;
+  --lcars-breath-hi: 1;
+
+  /* Power conduit: how long each light band is, as a share of the black
+     column. Short enough that the space between the two bands reads as
+     space — they should look like two travellers with a distance to
+     cover, not like one bar with a seam in it. */
+  --lcars-power-band: 16%;
+
+  /* Light level. The conduit runs CONSTANTLY (§4a), so this number is
+     the only control over its brightness — see §4a for why the ship has
+     one always-on light rather than several. */
+  --lcars-power-light: 0.62;
+}
+
+/* ─────────────────────────────────────────────
+   1. STANDBY AND FOCUS
+
+   body.lcars-idle is written by the LCARS Companion plugin. Nothing here
+   polls for it and nothing depends on it existing: with the script
+   off, the class is never added and the ship runs at full light
+   forever, which is the old behaviour.
+
+   Opacity only, and never on a whole pane. A dimmed reading pane would
+   be a dimmed document — the one surface in this theme that must stay
+   perfectly legible, because it is the actual content. Only the
+   currents in §3–§7 are affected. §4, the conduit, is the one
+   exception and no longer dims at all — see §4a.
+   ───────────────────────────────────────────── */
+body.lcars-idle {
+  --lcars-life: 0.16;
+  /* Flatten the breath rather than pausing it: (0.93 → 1) becoming
+     (0.985 → 1) is a light still on with nothing to say, which is
+     exactly what standby looks like. */
+  --lcars-breath-lo: 0.985;
+}
+
+/* Unfocused window: half, not off. The ship is still running, you just
+   are not looking at it. The distinction from standby matters — idle
+   is the ship resting, unfocused is the ship waiting for you.
+
+   Four consumers, and they needed different mechanisms, which is worth
+   recording because they are the same bug in different clothes — an
+   element that already animates opacity cannot be dimmed by declaring
+   opacity from outside:
+
+     §1 ribbon breath            brightness in ITS OWN keyframes —
+                                 multiplying --lcars-focus into the
+                                 keyframe's brightness(), because the
+                                 filter is already animated there
+     §7 subsystem bars          opacity in its own keyframes, same
+                                 reason, fixed after the first live test
+     §1b Ambient Life ×3        filter: opacity(), because those
+                                 animations own opacity too
+
+   The arm sweep used to be a fourth: it owned opacity on its element
+   outright, which needed no care at all. It was axed, and the conduit
+   that outlived it does not dim either — §4a made it always-on, so it
+   is not in this list. Three mechanisms for four consumers is the
+   whole story of this block.
+
+   The rule the lot of them share: an animation outranks an ordinary
+   declaration in the cascade, so the dim has to go wherever the
+   animation already is. */
+body:not(.is-focused) {
+  --lcars-focus: 0.5;
+}
+
+/* ─────────────────────────────────────────────
+   1b. STANDBY REACHES AMBIENT LIFE
+
+   Three animations in "LCARS - Ambient Life.css" run forever and know
+   nothing about standby: the selected row's 6s breath (§1–2), the
+   Copilot dot (§3), and the chat pulse. Left alone they would keep
+   running at full light through the whole idle window, which would
+   quietly undo the mechanism — a ship that dims its currents but leaves
+   three other things breathing does not read as standby, it reads as a
+   bug.
+
+   .status-bar used to be the sixth selector here, because Ambient Life
+   §5 gave it an idle pulse for this block to dim. The author killed that
+   animation as distracting, and the selector came out with it — an
+   orphan would have been worse than the original problem: with no
+   animation left on the bar, `filter: opacity(0.16)` would have been a
+   plain 700ms fade of every word count and cursor position in the
+   frame, the moment you stopped typing. Same complaint, slower.
+
+   So they are dimmed here rather than edited in there. Two reasons:
+   one file owns the standby state and the other owns the ambient
+   feedback, and neither has to know the other's selectors; and if
+   Ambient Life is toggled off, the three elements simply stop
+   breathing and there is nothing left to dim.
+
+   filter: opacity(), AND NOT opacity. This is not a stylistic
+   preference, it is the only thing that works. Three of these five
+   selectors already animate the opacity property themselves — the
+   Copilot dot (§3), the chat pulse, and the file-row pulse all keyframe
+   opacity directly. An animation sits above ordinary declarations in the
+   cascade, so `opacity: 0.16` here would be silently discarded on
+   exactly the three elements it was meant to dim, and the bug would
+   look like "standby works except sometimes." filter is a different
+   property from the one those keyframes own, so it multiplies their
+   rendered alpha without cancelling their motion. The animations keep
+   running underneath at full amplitude; only the light leaving the
+   element drops.
+
+   Uniform filter across all five rather than opacity where it happens
+   to be free. A dim that works on some selectors and silently fails on
+   others is worse than one that is a little more expensive, because
+   the failure mode is invisible and it will be discovered months later
+   in the one place it matters.
+
+   The two NN selectors are the pseudo-elements Ambient Life §1–2
+   animates, not the rows. Their keyframes touch outline-color, so
+   opacity was free there — but filtering the ::after rather than the
+   row is still correct, because the row carries NN Rows §8's hover
+   brightness lift and dimming the row would put that lift inside the
+   standby fade, which is the wrong thing for a hover to do.
+   ───────────────────────────────────────────── */
+body.lcars-idle :is(
+    .notebook-navigator .nn-navitem.nn-selected:not(.nn-header)::after,
+    .notebook-navigator .nn-file.nn-selected .nn-file-content::before,
+    .mod-right-split .tw-absolute.tw-rounded-full,
+    [role="menu"] .tw-absolute.tw-rounded-full,
+    [data-testid="chat-messages"] .tw-border.tw-border-solid.tw-animate-pulse
+  ) {
+  filter: opacity(0.16);
+  transition: filter 700ms linear;
+}
+
+/* And back out of standby to the alpha they already have, on the same
+   clock, so waking is a fade rather than a cut. Nothing else in
+   Ambient Life or lcars-frame.css puts a filter on any of these six,
+   so opacity(1) is the correct value to return to and does not undo
+   anything. */
+body:not(.lcars-idle) :is(
+    .notebook-navigator .nn-navitem.nn-selected:not(.nn-header)::after,
+    .notebook-navigator .nn-file.nn-selected .nn-file-content::before,
+    .mod-right-split .tw-absolute.tw-rounded-full,
+    [role="menu"] .tw-absolute.tw-rounded-full,
+    [data-testid="chat-messages"] .tw-border.tw-border-solid.tw-animate-pulse
+  ) {
+  filter: opacity(1);
+  transition: filter 700ms linear;
+}
+
+/* ─────────────────────────────────────────────
+   2. THE RIGHT RAIL'S ARM — REMOVED 2026-10-05
+
+   Was a gradient travelling the full height of the right sidebar's 24px
+   arm: 6% white on gray, on a fixed 7s, with a second faster layer for
+   work in flight. The scan rode on that second layer, so the arm's
+   removal took §5 with it.
+
+   The author's reason for axing it: the arm is the one place in the frame
+   where motion had stopped being scenery and started being noise. Every
+   other moving thing is either reporting state (a pane is on screen, a
+   value changed, work is in flight) or is answering you (a hover). The
+   arm was a light travelling down a strip that reports nothing at all —
+   it just said "powered" to no one in particular, on a loop, forever.
+
+   The right-rail ideas are not lost, they are unmade. What belongs there
+   is something that reports the right sidebar's actual state: how many
+   tabs are stacked, whether any of them need attention. That is a real
+   signal and the arm is a real surface for it, but it is a different
+   feature and not something to keep by inertia.
+   ───────────────────────────────────────────── */
+
+/* ─────────────────────────────────────────────
+   3. RIBBON BREATHING — the lit buttons only
+
+   ribbon-roles.js (CustomJS, not in the v0.1 release) writes .is-visible on a button whose pane is open AND
+   on screen, read off the DOM. That is a real reading of real state,
+   which is the only reason this is allowed to move: the buttons that
+   breathe are exactly the panes you are currently looking at, and the
+   ones that are closed or off-screen hold still. So the motion tells
+   you something before you read the color.
+
+   Deliberately NOT on .is-open-but-not-visible. Those panes are behind
+   another tab. A light that breathes for a pane you cannot see spends
+   the user's attention on nothing, and there are nine or ten of them
+   behind a busy workspace.
+
+   filter, not opacity: opacity would let the black icon wash toward the
+   fill and the button would lose the one detail that says which command
+   it is. brightness() scales all three channels together, so the fill
+   lifts and the black icon stays black.
+
+   lcars-frame.css §38 sets background-color and box-shadow on this
+   exact selector with !important. This rule adds only filter and
+   animation, neither of which §38 touches, so the two coexist with no
+   fight. The selector is written at §38's specificity on purpose —
+   reaching for an extra class to win a property that is not in
+   conflict would be a lie about priority.
+
+THE HOVER BOOST IS A MULTIPLIER HERE, NOT A FILTER THERE
+   ──────────────────────────────────────────────────────
+   §38's hover rule was `filter: brightness(1.15)` on this exact
+   selector, which meant it simply overwrote this animation: same
+   property, same element, hover wins. Real, and worth fixing, but it
+   was NOT why the breath was invisible — the author had never once seen it,
+   hovering or not.
+
+   THE ACTUAL REASON, WHICH COST THREE ROUNDS TO FIND
+   ─────────────────────────────────────────────────
+   §38 gives a lit opener this:
+       background-color: var(--s-bright) !important;   (#41c4f7)
+       box-shadow: none !important;
+       --icon-color: #000 !important;
+
+   All three carry !important, and !important outranks an animation in
+   the cascade. So there is exactly ONE property left that this file is
+   allowed to animate: filter. That rules out every more natural
+   approach — you cannot animate the background, cannot animate a glow
+   onto the box-shadow, cannot animate --icon-color, all three are shut.
+
+   So the breath has to be brightness() on the whole button. And
+   brightness() multiplies, which means BLACK STAYS BLACK: #000 under
+   any brightness is #000. The icon never moved. The breath could only
+   move the fill, from #41c4f7 at hi to #41c4f7 × 0.93 = #3cb5e6 at lo.
+
+   Seven percent. On a 28px square in the corner of your eye, in a color
+   that is already near-white. That is not a subtle breath, that is
+   nothing. LO is now 0.82, which puts the floor at #35a1cb — the same
+   hue, visibly darker, unmistakable on a 4.4s cycle. Same idiom
+   Ambient Life uses on the selected row; the numbers match because the
+   two are answering the same question on similarly lit surfaces.
+
+   Worth keeping in mind for anything else added here: if it is not a
+   filter and it is not opacity, this button cannot animate it. That is
+   a property of §38's !important, not of this file.
+
+   Kept from the round-2 fix, since it is correct either way: §38 now
+   sets --lcars-ribbon-hover-boost: 1.15 and applies no filter, with
+   the boost multiplied in HERE. Default 1, so with Ship Life off the
+   frame's hover is unchanged in value and timing, and the boost now
+   crossfades over the breath instead of snapping.
+   ───────────────────────────────────────────── */
+/* The ribbon breath was removed 2026-10-05 (the author: "distracting").
+   See the README's Removed section. Nothing in this section draws. */
+
+/* ─────────────────────────────────────────────
+   4. POWER CONDUIT — two lines meeting at the vertical center
+
+   The author, 2026-10-05: two lines with the power travelling towards each
+   other, running top to bottom, converging on the black space's vertical
+   centre. Offered in the ribbon's black gap or at the bottom of the
+   reading pane. The ribbon gap is the default because it is a
+   full-height column, so the travel has room to be a TRAVEL rather than
+   a twitch.
+
+   WHY ONE ELEMENT AND TWO BACKGROUND LAYERS
+   The ribbon gap is .side-dock-actions, which is display:flex — so
+   ::before and ::after would be FLEX ITEMS and would shove the keypad
+   buttons around. Absolutely positioning them takes them out of flow and
+   works, but it needs position:relative on a container that has none,
+   and it splits the effect across two elements that then have to be kept
+   in step. Two background layers on one absolutely positioned pseudo do
+   the same job with one box and no layout risk.
+
+   THE AXIS — CORRECTED 2026-10-05 AFTER THE AUTHOR'S FIRST LIVE TEST
+   ────────────────────────────────────────────────────────────
+   The first build had the two lines closing in from LEFT and RIGHT onto
+   the column's HORIZONTAL midpoint, with the band riding down the
+   column. On a ribbon 30-odd pixels wide that convergence is nearly
+   invisible — the whole horizontal play is about 26px, against a
+   vertical run of several hundred. It looked like one bar sliding down
+   with a faint seam in it.
+
+   The author's correction: the lines travel THROUGH the black space towards
+   its VERTICAL centre. So the meeting point is the middle of the column
+   in the top-to-bottom sense, one line descending from above and one
+   ascending from below, both on the column's horizontal centreline so
+   they actually arrive together. That is also the reading that makes
+   "top to bottom" and "travelling towards each other" agree with each
+   other, where before they were pulling in opposite directions.
+
+   WHY @property
+   Both lines are driven from ONE normalised number, --lcars-power-t,
+   with the descending line reading it forwards and the ascending line
+   reading it backwards. Two separate position animations would be two
+   clocks that slowly drift apart, and a drift reads as a fault — which
+   is the same reasoning that killed the two-property version. The mirror
+   is arithmetic, not a second timeline.
+
+   WHY THE ALPHA PEAKS AT THE CENTRE
+   The two bands only overlap at t=0.5, and alpha-compositing two 0.62
+   whites on black lands around 0.86, so the meeting is already a
+   brightening. The envelope adds the other half of it: the pair is
+   dimmest as they are furthest apart and brightest exactly at the
+   vertical centre, so the convergence reads as the event rather than as
+   two bands happening to pass. Same argument as the RED ALERT blink in
+   "LCARS - Stardate.css" — the light has to carry the effect without the
+   motion, and the motion must not be the only thing carrying it.
+
+   WHY -25% → 125% AND NOT -band → 100%
+   The range starts symmetrically outside the box so each band is fully
+   clear of the strip at t=0 and arrives at exactly 50% at t=1. Running
+   them to the edges instead (-band → 100%) would put the arrival at
+   t≈0.57 and desynchronise it from the brightening, so the peak would
+   land after the lines had already passed each other.
+
+   THEY END AT THE MIDPOINT — CORRECTED 2026-10-05, SECOND LIVE TEST
+   ─────────────────────────────────────────────────────────────────
+   The first vertical build let them run the full height and cross: at
+   t=1 the descending band was off the bottom and the ascending one off
+   the top, so the effect read as two bands in a loop rather than as two
+   bands arriving somewhere. The author could not tell whether they were
+   reversing at the midpoint or just travelling, which is the tell that
+   the arrival was not legible as an arrival.
+
+   So the travel now spans -25% → 50% and 125% → 50%: they close on the
+   midpoint and STOP. They do not cross and they do not reverse — a
+   reversal would be a third reading of the same motion and the wrong
+   one, because it implies they turned around rather than completed.
+   Then they hold there while fading, and the loop resets invisibly.
+
+   The reset is why --lcars-power-t is flat from 62% to 100%. Snapping it
+   back to 0 at the loop point would be a visible jump, so it is held at
+   1 through the dead part of the cycle and the opacity is already 0
+   before the wrap. This is the same masking trick as the RED ALERT blink
+   in "LCARS - Stardate.css" and the same reason: the light carries the
+   effect, so the motion is free to be discontinuous where nothing is
+   looking.
+   ───────────────────────────────────────────── */
+@keyframes lcars-power-travel {
+  from {
+    --lcars-power-t: 0;
+  }
+  /* Arrive at 62%, then hold. The hold is what makes the arrival an
+     event rather than a pass-by, and it is also where the loop reset is
+     hidden — see the note above. */
+  62% {
+    --lcars-power-t: 1;
+  }
+  to {
+    --lcars-power-t: 1;
+  }
+}
+
+/* Fade in, hold full through the arrival, then fade out while the bands
+   sit on the midpoint. Zero across the last fifth of the cycle, which is
+   the window the t reset happens inside. */
+@keyframes lcars-power-meet {
+  0% {
+    --lcars-power-o: 0;
+  }
+  8% {
+    --lcars-power-o: 1;
+  }
+  62% {
+    --lcars-power-o: 1;
+  }
+  78% {
+    --lcars-power-o: 0;
+  }
+  to {
+    --lcars-power-o: 0;
+  }
+}
+
+/* ── 4a. DEFAULT: the black strip down the ribbon's left edge ─────────
+   The author, second live test 2026-10-05: "the black space to the left of
+   the ribbon". That is .workspace-ribbon:is(.mod-left, .mod-primary)::after — an 8px
+   column at left:0, inset by --header-height at both ends, which
+   lcars-frame.css:803 already fills with the black gap colour.
+
+   WHICH IS THE WHOLE POINT, AND WHY THIS PLACEMENT IS EASIER
+   ───────────────────────────────────────────────────────────
+   The previous placement put the bands in the black column beside the
+   keypad, which was the right idea in the wrong column — the black there
+   is only black in the 4px GAPS between the gray blocks, so the bands
+   had to be threaded between solid gray and needed all of this to work:
+
+     · the container had to be a stacking context (via isolation:isolate)
+       so a z-index:-1 pseudo could sit above the column's own black
+       but below the blocks,
+     · while NOT becoming a containing block, or the travel would
+       collapse to whatever height core gave .side-dock-actions,
+     · which is a constraint that looks like a mistake and invites being
+       "simplified" back into a bug.
+
+   All three fall away here. The strip's background IS the black, the
+   strip is already positioned by the frame, and the strip is already
+   the leftmost thing on screen with nothing over it. So this is three
+   background layers added to a pseudo-element that already exists, and
+   the paint order is not a consideration at all.
+
+   WHY NO opacity ON THIS PSEUDO — the one real trap
+   ──────────────────────────────────────────────────
+   Element opacity cannot be used here, and it is worth spelling out
+   because it is the obvious thing to reach for. This pseudo-element IS
+   the black strip: its background is the gap colour. Setting opacity on
+   it would fade the BLACK ITSELF, so the conduit would appear to pulse
+   a hole in the left edge of the ribbon rather than to send light down
+   it. The alpha therefore goes into the gradient's own rgb() alpha, and
+   the element's opacity is left alone. Same reason the earlier version
+   put --lcars-power-o in the gradient stop.
+
+   THE VERTICAL EXTENT IS THE STRIP'S, NOT THE RIBBON'S
+   ──────────────────────────────────────────────────────
+   The strip runs from --header-height to the same distance off the
+   bottom, so the conduit travels that shorter run and the midpoint it
+   closes on is the midpoint of the black the user can actually see.
+   Deliberately not stretched to the ribbon's full height: the effect is
+   meant to live inside the black, and black that has been extended to
+   make room for an animation is no longer the frame's black.
+   ───────────────────────────────────────────── */
+body .workspace-ribbon:is(.mod-left, .mod-primary)::after {
+  /* Alpha in the gradient, never opacity on the element — see above.
+
+     CONSTANT LIGHT, per the author, third live test: this multiplies
+     --lcars-power-light by the cycle envelope ONLY. No --lcars-life,
+     no --lcars-focus. Standby does not dim it and losing window focus
+     does not dim it.
+
+     The reasoning is that standby in this theme is a set of DIMMABLE
+     decorations — the ribbon breath, the subsystem bars, Ambient Life's
+     three — and the conduit is not one of them. It is the one light on
+     the ship that is always on, like the running lights under a view
+     screen, which do not go out when nobody is in the room. Making it
+     participate would leave standby with nothing to say in the one place
+     the eye goes when the room goes dark.
+
+     It also means reduced motion is the only thing that turns it off,
+     which is the correct shape for an always-on element: the one way to
+     stop it is to ask, not to wait for the ship to fall asleep. */
+  --lcars-power-alpha: calc(
+    var(--lcars-power-light, 0.62) * var(--lcars-power-o, 0)
+  );
+
+  background-image:
+    linear-gradient(
+      to bottom,
+      transparent 0%,
+      rgb(255 255 255 / var(--lcars-power-alpha, 0)) 50%,
+      transparent 100%
+    ),
+    linear-gradient(
+      to bottom,
+      transparent 0%,
+      rgb(255 255 255 / var(--lcars-power-alpha, 0)) 50%,
+      transparent 100%
+    );
+  background-size: 2px var(--lcars-power-band, 16%),
+    2px var(--lcars-power-band, 16%);
+  /* Both bands at 50%, which centres each 2px layer on the strip's
+     centreline so they arrive together instead of crossing side by side.
+     The y pair is the mirror: one reads --lcars-power-t forwards from
+     above the strip, the other backwards from below it, and both land on
+     50% at t=1 and stop there. */
+  background-position:
+    50% calc(-25% + var(--lcars-power-t, 0) * 75%),
+    50% calc(125% - var(--lcars-power-t, 0) * 75%);
+  background-repeat: no-repeat;
+
+  animation: lcars-power-travel 5.4s linear infinite,
+    lcars-power-meet 5.4s linear infinite;
+}
+
+
+/* ── 4b. ALTERNATE: the bottom of the reading pane ──────────────────
+   The same effect on the gray bar that lcars-frame.css §18/§19 draws
+   along the bottom of the reading pane (--lcars-bottom-bar, 32px).
+   ::after on .mod-vertical.mod-root is that bar; ::before is unused —
+   verified 2026-10-05 — so it takes the effect.
+
+   Turn it on from the console:
+     document.body.classList.add("lcars-power-reading")
+   or set it in Style Manager.
+
+   Same geometry, same mirror pair, same arrival and stop as the ribbon
+   strip in 4a — switching placements changes WHERE the conduit is and
+   never WHAT it does.
+
+   The geometry is worse here, and the reason is the axis: a vertical
+   convergence needs vertical room, and this bar has 32px of it. The two
+   bands get about 11px each and meet in the middle of a featureless gray
+   strip, so it reads as a blink with a travel attached. The ribbon strip
+   is several hundred pixels tall and 8px wide, which is the shape this
+   effect actually wants.
+
+   Same trap as 4a, for the same reason: this pseudo-element is the gray
+   bottom bar, so element opacity would fade the BAR. The alpha is in
+   the gradient.
+   ───────────────────────────────────────────── */
+body.lcars-power-reading .workspace-split.mod-vertical.mod-root {
+  position: relative;
+}
+
+body.lcars-power-reading .workspace-split.mod-vertical.mod-root::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: var(--lcars-bottom-bar, 32px);
+  pointer-events: none;
+
+  background-image:
+    linear-gradient(
+      to bottom,
+      transparent 0%,
+      rgb(255 255 255 / var(--lcars-power-light, 0.62)) 50%,
+      transparent 100%
+    ),
+    linear-gradient(
+      to bottom,
+      transparent 0%,
+      rgb(255 255 255 / var(--lcars-power-light, 0.62)) 50%,
+      transparent 100%
+    );
+  /* Same always-on rule as the ribbon strip in 4a: no --lcars-life, no
+     --lcars-focus. The alpha lives in the gradient because this
+     pseudo-element is the gray bottom bar and element opacity would
+     fade the bar itself. */
+--lcars-power-alpha: calc(
+    var(--lcars-power-light, 0.62) * var(--lcars-power-o, 0)
+  );
+
+  background-image:
+    linear-gradient(
+      to bottom,
+      transparent 0%,
+      rgb(255 255 255 / var(--lcars-power-alpha, 0)) 50%,
+      transparent 100%
+    ),
+    linear-gradient(
+      to bottom,
+      transparent 0%,
+      rgb(255 255 255 / var(--lcars-power-alpha, 0)) 50%,
+      transparent 100%
+    );
+  /* A larger share of the band than 4a's 16%: this box is 32px tall
+     rather than several hundred, and 16% of that is about 5px — too
+     short to read as a travelling light. */
+  background-size: 2px 34%, 2px 34%;
+  background-position:
+    50% calc(-25% + var(--lcars-power-t, 0) * 75%),
+    50% calc(125% - var(--lcars-power-t, 0) * 75%);
+  background-repeat: no-repeat;
+
+  animation: lcars-power-travel 5.4s linear infinite,
+    lcars-power-meet 5.4s linear infinite;
+}
+
+/* ─────────────────────────────────────────────
+   5. SCAN ACTIVITY — REMOVED 2026-10-05
+
+   body.lcars-busy is written by the LCARS Companion plugin, from work
+   that is actually in flight: a Copilot response streaming, or anything
+   calling window.lcarsActivity.begin() / .end(). The class and the
+   registry both stay, and the script still sets them.
+
+   What is gone is its only consumer. The scan rode as a second layer on
+   the right rail's arm, and the author axed the arm (§2), so there was
+   nothing left to sweep. Rather than re-site the effect somewhere it
+   was never designed for — the point of a scan is a long unbroken
+   surface to travel along, and after the arm is gone the frame has no
+   such surface left — the whole visual layer is dropped.
+
+   So lcarsActivity is now API without a visible effect. That is
+   deliberate and it is still worth having: the registry is the honest
+   answer to "is work in flight", any future consumer gets it for free,
+   and nothing about the mechanism had to change to keep it. The day
+   something needs it, it is already correct.
+   ───────────────────────────────────────────── */
+
+/* ─────────────────────────────────────────────
+   6. SUBSYSTEM READOUT
+
+   Markup is built by the LCARS Companion plugin in the sidebar banner,
+   NOT written into nn-bridge/data.json — that file belongs to the
+   nn-bridge plugin and is rewritten whole on any settings save, so
+   anything put there can be clobbered.
+
+   Two-column grid, because the banner is roughly 150px wide in the
+   default sidebar. Five channels in three rows. Each row's bar breathes
+   at a DIFFERENT duration on purpose: bars pulsing in lockstep read as
+   one decoration pulsing, and five of them is worse than one. Staggered,
+   they read as five subsystems that happen to have different duty
+   cycles — which is both true and the whole point.
+
+   The values are real text, not a graphic, so the readout still works
+   with every animation off and with a screen reader. Bars are
+   decorative and hidden from assistive tech; the number is the content.
+   ───────────────────────────────────────────── */
+.lcars-subsys {
+  margin-top: 3px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 4px;
+  row-gap: 2px;
+
+  font-family: var(--lcars-label-font, "Helvetica Neue", sans-serif);
+  font-size: clamp(0.62em, 3.1cqi, 0.72em);
+  line-height: 1.5;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--lcars-dim, #9ea5ba);
+  text-align: left;
+}
+
+.lcars-subsys-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  column-gap: 3px;
+  min-width: 0;
+}
+
+.lcars-subsys-label {
+  color: var(--lcars-ltab-icon, #6d748c);
+}
+
+.lcars-subsys-bar {
+  position: relative;
+  height: 3px;
+  background: var(--lcars-row-bg, #1e2229);
+  overflow: hidden;
+}
+
+/* The fill's width is written by the script as a percentage. It
+   breathes its OPACITY, never its width — a bar that changes width
+   while it is also reporting a number is showing two things at once,
+   and the eye trusts the moving one. */
+.lcars-subsys-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--lcars-subsys-pct, 0%);
+  background: var(--lcars-readout-fill, #37a6d1);
+  animation: lcars-subsys-breathe 4.1s ease-in-out infinite;
+}
+
+/* Five channels, five clocks. The odd seconds are deliberate: nothing
+   here lines up with the arm's 7s or the conduit's 5.4s either, so the
+   ship never settles into one rhythm. */
+.lcars-subsys-row:nth-child(1) .lcars-subsys-fill { animation-duration: 3.7s; }
+.lcars-subsys-row:nth-child(2) .lcars-subsys-fill { animation-duration: 5.9s; }
+.lcars-subsys-row:nth-child(3) .lcars-subsys-fill { animation-duration: 4.7s; }
+.lcars-subsys-row:nth-child(4) .lcars-subsys-fill { animation-duration: 6.7s; }
+.lcars-subsys-row:nth-child(5) .lcars-subsys-fill { animation-duration: 4.3s; }
+
+/* Five channels in a two-column grid leaves one row short a partner,
+   and the odd one out is BRDG. Rather than pad it with a sixth fake
+   channel, BRDG takes the full width and reads as the summary line
+   under the four — which is the right rank for it anyway, since it is
+   the one channel that is about the ship rather than about you. */
+.lcars-subsys-row:nth-child(5) {
+  grid-column: 1 / -1;
+}
+
+/* Carries --lcars-life and --lcars-focus, unlike every other keyframe in
+   this file. That is the fix for the fifth channel that had been left out
+   of standby: the bars used to breathe 0.55 → 1 unconditionally, so the
+   whole frame went quiet after 30s except these five, which is precisely
+   the failure §1b describes as "reads as a bug". Multiplying here rather
+   than setting opacity on .lcars-subsys-fill is forced — the fill already
+   has an animation, and an animation outranks an ordinary declaration, so
+   an opacity outside the keyframes would be silently discarded on the one
+   element it was meant to dim. Same reason §1b uses filter for the three
+   Ambient Life animations.
+
+   ─────────────────────────────────────────────────────────────
+   AND NOW THEY DON'T DIM AT ALL — the author, third live test. Drop the two
+   multipliers; the bars breathe 0.55 → 1 forever and standby and
+   unfocused-window both leave them alone.
+
+   This reverses the fix above, and the reversal is deliberate, so it is
+   worth being honest about what changed my mind. My original argument
+   was that un-dimmed bars read as a bug: the frame goes quiet, and five
+   things keep moving, so the moving ones look broken instead of
+   attentive.
+
+   That argument is right about AMBIENT LIFE and wrong about this, and
+   the difference is what each thing is. The selected row's breath, the
+   Copilot dot and the status bar light are decoration — they carry no
+   reading, and there is no argument for any of them outliving standby.
+   A subsystem bar is a MEASUREMENT. NOTE: 1,473 unchecked. MOD: 12.
+   BRDG: last commit 3 days ago. A gauge that dims when you stop looking
+   at it has thrown away the only reason it exists, and worse, it dims
+   at exactly the moment you come back — so the first thing standby does
+   on your return is hide the state you came back to read.
+
+   That is the same test the conduit failed on in the same sitting: if
+   dimming it costs the signal its purpose, the signal does not dim.
+   Two of the three things I put into standby this week were wrong, and
+   the conduit was right. Worth writing down as a pattern rather than a
+   preference. */
+@keyframes lcars-subsys-breathe {
+  0%, 100% { opacity: 0.55; }
+  50%      { opacity: 1; }
+}
+
+.lcars-subsys-val {
+  color: var(--lcars-icon-hover, #f3f4f7);
+  font-variant-numeric: tabular-nums;
+}
+
+/* A channel with no reading — the file is gone, the folder was renamed,
+   the thing it watches is not running. Dimmed rather than hidden, so a
+   row that has gone quiet reads as OFFLINE instead of as absent. */
+.lcars-subsys-row.is-void .lcars-subsys-val {
+  color: var(--lcars-ribbon, #52596e);
+}
+.lcars-subsys-row.is-void .lcars-subsys-fill {
+  background: var(--lcars-ribbon, #52596e);
+}
+
+/* ─────────────────────────────────────────────
+   7. REDUCED MOTION
+
+   One block for the whole file. Every rule above is decoration on top
+   of a frame that is already fully readable when still: the values in
+   §6 are text, and everything else is light on gray. So there is
+   nothing here that needs a reduced-motion equivalent — the reduced
+   state IS the same frame with the light off.
+
+   --lcars-life goes to 0 rather than each rule getting its own
+   override, because that reuses the standby mechanism instead of
+   duplicating it. Reduced motion and standby are the same condition
+   for this interface, and saying so once is better than saying it
+   twice.
+   ───────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  body {
+    --lcars-life: 0;
+    --lcars-breath-lo: 1;
+  }
+
+  /* The two conduit placements are listed even though they ignore
+     --lcars-life: §4a made the conduit always-on, so it no longer dims
+     with standby and reduced motion is now the ONLY way to stop it.
+     That is the intent — see §4a — but it means this list has to keep
+     naming them by hand. If a placement is ever added, add it here. */
+  body .workspace-ribbon:is(.mod-left, .mod-primary)::after,
+  body.lcars-power-reading .workspace-split.mod-vertical.mod-root::before,
+  .lcars-subsys-fill {
+    animation: none !important;
+  }
+}
+
+/* MOTION-OFF begin (generated by tools/gen_motion_off.py; edit the generator or the rules above, not this block) */
+html:root:root body.lcars-motion-off .notebook-navigator .nn-navitem.nn-selected:not(.nn-header)::after,
+html:root:root body.lcars-motion-off .notebook-navigator .nn-file.nn-selected .nn-file-content::before,
+html:root:root body.lcars-motion-off .mod-left-split .nav-files-container .nav-file-title.is-active,
+body.lcars-motion-off .mod-right-split .tw-absolute.tw-rounded-full,
+body.lcars-motion-off [role="menu"] .tw-absolute.tw-rounded-full,
+body.lcars-motion-off [data-testid="chat-messages"] .tw-border.tw-border-solid.tw-animate-pulse,
+body.lcars-motion-off .workspace-ribbon:is(.mod-left, .mod-primary)::after,
+body.lcars-motion-off.lcars-power-reading .workspace-split.mod-vertical.mod-root::before,
+body.lcars-motion-off .lcars-subsys-fill {
+  animation: none !important;
+}
+body.lcars-motion-off { --lcars-life: 0; --lcars-breath-lo: 1; }
+body.lcars-motion-off .workspace-ribbon:is(.mod-left, .mod-primary)::after { animation: none !important; }
+body.lcars-motion-off.lcars-power-reading .workspace-split.mod-vertical.mod-root::before { animation: none !important; }
+body.lcars-motion-off .lcars-subsys-fill { animation: none !important; }
+/* MOTION-OFF end */

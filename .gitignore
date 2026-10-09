@@ -1,0 +1,9 @@
+data.json
+*.bak*
+*.broken*
+.DS_Store
+node_modules/
+
+# Local cleanup/scrubbing tooling — not published
+tools/scrub_for_release.py
+tools/sync_snippets.py

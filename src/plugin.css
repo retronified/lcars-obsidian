@@ -1,0 +1,1103 @@
+/* LCARS Companion — bridge banner.
+   Rows sit 4px apart and stay tight. The plugin pads the whole banner
+   to a whole number of ribbon grid rows (--lcars-bh-pitch), so any
+   spare space is at the bottom and the rows below stay on the grid. */
+.lcars-bh-host {
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+.lcars-bh-inner {
+  box-sizing: border-box;
+  width: 100%;
+  /* The theme sets --lcars-bh-top so the first row starts on a grid
+     line ("auto" = the plugin measures the ribbon); the plugin counts
+     it when it snaps the height. */
+  padding: 0 var(--lcars-bh-pad-x, 10px);
+  padding-top: var(--lcars-bh-top, 0px);
+  font-size: var(--lcars-bh-base, 13px);
+  font-family: var(--lcars-heading-font, "Antonio", sans-serif);
+  text-transform: uppercase;
+  overflow: hidden;
+  container-type: inline-size;
+  container-name: nn-bridge;
+}
+.lcars-bh-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.lcars-bh-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.35em;
+  width: 100%;
+  white-space: nowrap;
+  line-height: 1;
+}
+.lcars-bh-version { font-size: 0.8em; opacity: 0.7; color: var(--lcars-bh-text, #F3F4F7); }
+.lcars-bh-name { color: var(--lcars-embed-heading, #ff977b); }
+.lcars-bh-registry, .lcars-bh-value { color: var(--lcars-bh-text, #F3F4F7); }
+.lcars-bh-dim { color: var(--lcars-bh-dim, #9EA5BA); }
+.lcars-bh-cond { display: inline-flex; align-items: center; gap: 0.25em; }
+.lcars-bh-cond svg { width: 0.8em; height: 0.8em; stroke: var(--lcars-bh-text, #F3F4F7); }
+.lcars-bh-host .lcars-subsys { font-size: 0.68em; margin-top: 4px; }
+.lcars-bh-embed { margin-top: 4px; text-transform: none; font-family: var(--lcars-label-font, "Helvetica Neue", sans-serif); font-size: 0.8em; }
+.lcars-bh-embed > :first-child { margin-top: 0; }
+.lcars-bh-embed > :last-child { margin-bottom: 0; }
+
+/* Lights engine (section 2). One row of segments at the bottom of the
+   banner. Colors come in as --lt-* custom properties from settings.
+   Motion is CSS only. The chaser animates opacity on a ::after layer,
+   which the compositor handles without repainting the bar. Its
+   keyframes (lcars-lt-head) are written by the plugin from the chaser
+   length setting. --lt-dur comes from the 1-second tick. */
+.lcars-lt { margin-top: 6px; font-size: 0.62em; color: var(--lt-text, #F3F4F7); }
+.lcars-lt:not([data-click="none"]) { cursor: pointer; }
+.lcars-lt-main { display: flex; align-items: center; gap: 0.5em; width: var(--lt-width, 100%); }
+.lcars-lt[data-align="centered"] .lcars-lt-main { margin: 0 auto; }
+.lcars-lt[data-label="left"] .lcars-lt-main { flex-direction: row-reverse; }
+.lcars-lt[data-label="above"] .lcars-lt-main { flex-direction: column-reverse; align-items: stretch; gap: 3px; }
+.lcars-lt[data-label="below"] .lcars-lt-main { flex-direction: column; align-items: stretch; gap: 3px; }
+.lcars-lt[data-align="centered"]:is([data-label="above"], [data-label="below"]) .lcars-lt-label { text-align: center; }
+/* Bars take every bit of width the label leaves. */
+.lcars-lt-bars { flex: 1 1 0; min-width: calc(100% - var(--lt-label-max, 70%)); display: flex; flex-direction: column; gap: 3px; }
+.lcars-lt-bar { display: flex; gap: var(--lt-gap, 2px); height: max(5px, 0.7em); width: 100%; }
+.lcars-lt-label { font-size: calc(var(--lt-label-size, 1) * 1em); flex: 0 1 auto; max-width: var(--lt-label-max, 70%); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1; transition: opacity 0.22s ease; }
+
+/* The calendar bar is drawn in the showing state's look: the lit part in its
+   colors (--lt-bar-g0, and --lt-bar-g1 for a gradient), the moving head in its
+   Light color, white when it has none, and the unlit part in the empty color.
+   Only the final minutes can bring a color of their own. */
+.lcars-lt-seg {
+  position: relative; flex: 1 1 0; min-width: 0; background: var(--lt-empty, #2f3749);
+  --lt-on: var(--lt-bar-g0, #41c4f7); --lt-g0: var(--lt-bar-g0, #41c4f7); --lt-g1: var(--lt-bar-g1, #ff977b);
+  --lt-head: var(--lt-bar-head, #f3f4f7);
+}
+.lcars-lt-seg[data-tone="final"] {
+  --lt-on: var(--lt-final-fill, var(--lt-bar-g0, #41c4f7)); --lt-g0: var(--lt-final-g0, var(--lt-bar-g0, #41c4f7));
+  --lt-g1: var(--lt-final-g1, var(--lt-bar-g1, #ff977b)); --lt-head: var(--lt-final-head, var(--lt-bar-head, #f3f4f7));
+}
+/* Two rows: the current event in the first color, the next one in the second. */
+.lcars-lt[data-fill="twotone"] .lcars-lt-seg[data-tone="next"] { --lt-on: var(--lt-bar-g1, #ff977b); --lt-g0: var(--lt-bar-g1, #ff977b); --lt-g1: var(--lt-bar-g1, #ff977b); }
+.lcars-lt-seg.is-on { background: var(--lt-on); }
+.lcars-lt-seg.is-dim { background: color-mix(in srgb, var(--lt-on) 35%, var(--lt-empty, #2f3749)); }
+.lcars-lt[data-fill="gradient"]:not([data-fx-off~="gradient"]) .lcars-lt-seg.is-on {
+  background: color-mix(in srgb, var(--lt-g1) calc(var(--p, 0) * 100%), var(--lt-g0));
+}
+
+/* Caps. B is one pill, so the bar itself is rounded. */
+.lcars-lt[data-caps="round"]:not([data-shape="B"]) .lcars-lt-seg,
+.lcars-lt[data-caps="round"]:not([data-shape="B"]) .lcars-lt-seg::after { border-radius: 999px; }
+.lcars-lt[data-caps="lcars"]:not([data-shape="B"]) .lcars-lt-seg:first-child,
+.lcars-lt[data-caps="lcars"]:not([data-shape="B"]) .lcars-lt-seg:first-child::after { border-radius: 999px 0 0 999px; }
+.lcars-lt[data-caps="lcars"]:not([data-shape="B"]) .lcars-lt-seg:last-child,
+.lcars-lt[data-caps="lcars"]:not([data-shape="B"]) .lcars-lt-seg:last-child::after { border-radius: 0 999px 999px 0; }
+.lcars-lt[data-shape="B"] .lcars-lt-bar { border-radius: 999px; overflow: hidden; }
+
+/* Chase: C runs over the lit part, E runs from both edges to the middle.
+   The fill underneath keeps its own colors; only the chaser layer moves. */
+.lcars-lt-seg::after { content: ""; position: absolute; inset: 0; background: var(--lt-head); opacity: 0; pointer-events: none; }
+.lcars-lt:not([data-fx-off~="chase"])[data-shape="C"]:is([data-motion="fixed"], [data-motion="speedup"]):not([data-mode="rest"]) .lcars-lt-seg.is-on::after,
+.lcars-lt:not([data-fx-off~="chase"])[data-shape="E"]:is([data-motion="fixed"], [data-motion="speedup"]):not([data-mode="rest"]) .lcars-lt-seg::after {
+  will-change: opacity;
+  animation: lcars-lt-head var(--lt-dur, 4s) linear infinite;
+  animation-delay: calc(var(--o, 0) / var(--lt-n, 16) * var(--lt-dur, 4s) - var(--lt-dur, 4s));
+}
+.lcars-lt:not([data-fx-off~="breathe"])[data-motion="breathe"]:not([data-mode="rest"]) .lcars-lt-bars { animation: lcars-lt-breathe 4s ease-in-out infinite; }
+@keyframes lcars-lt-breathe { 50% { opacity: 0.55; } }
+
+/* Final minutes before an event. */
+.lcars-lt.is-final[data-final="color"] .lcars-lt-seg.is-on { background: var(--lt-final, #e7442a); }
+.lcars-lt.is-final:not([data-fx-off~="blink"])[data-final="blink"] .lcars-lt-bars { animation: lcars-lt-blink 1s steps(1) infinite; }
+@keyframes lcars-lt-blink { 50% { opacity: 0.25; } }
+.lcars-lt.is-final:not([data-fx-off~="pulse"])[data-final="pulse"] .lcars-lt-bars { animation: lcars-lt-pulse 60s linear infinite; }
+@keyframes lcars-lt-pulse { 0%, 2% { opacity: 0.3; } 4%, 100% { opacity: 1; } }
+
+/* Resting lights. They draw on the ::after layer in the rest color at the
+   rest brightness; the bar underneath stays empty. */
+.lcars-lt[data-mode="rest"] .lcars-lt-seg::after {
+  background: color-mix(in srgb, var(--lt-rest2, #ff977b) calc(var(--rm, 0) * 100%), var(--lt-rest, #41c4f7));
+}
+/* A Light color: the segments sit on the resting colors at the glow level, and
+   a separate light in the Light color moves on top, from nothing up to the peak. */
+.lcars-lt[data-light][data-mode="rest"] .lcars-lt-seg {
+  background: color-mix(in srgb, color-mix(in srgb, var(--lt-rest2, #ff977b) calc(var(--rm, 0) * 100%), var(--lt-rest, #41c4f7)) calc(var(--lt-glow, 0) * 100%), var(--lt-empty, #2f3749));
+}
+.lcars-lt[data-light][data-mode="rest"]:is([data-rest="heartbeat"], [data-rest="breathe"], [data-rest="cascade"]) .lcars-lt-seg::after { background: var(--lt-light, #f3f4f7); }
+/* The Light color is only the brightest part: the head of a light, or the crest of a band.
+   It is its own layer above the moving layer, and only its opacity changes. */
+.lcars-lt[data-light][data-mode="rest"]:not([data-fx-off~="rest"]):is([data-beh="constant"], .is-play):is([data-rest="chase"], [data-rest="comet"], [data-rest="scanner"], [data-rest="wide"], [data-rest="warp"], [data-rest="pulses"]) .lcars-lt-seg::before {
+  content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none; border-radius: inherit;
+  background: var(--lt-light, #f3f4f7);
+  opacity: calc(var(--lt-rest-b, 0.3) * clamp(0, (var(--f) - 0.75) / 0.25, 1));
+}
+/* Every resting segment sits at the minimum; the patterns move it up to the peak. */
+.lcars-lt:not([data-fx-off~="rest"])[data-mode="rest"]:not([data-rest="off"]) .lcars-lt-seg::after { opacity: var(--lt-rest-min, 0); }
+
+/* The resting lights are a light STYLE (rest), a DIRECTION (data-dir), and a
+   BEHAVIOR (data-beh): constant, or played on wake or on an interval, which is
+   the class is-play. Styles with a path: chase, comet, scanner, wide, warp core
+   and warp pulses. Cascade, heartbeat and breathe have no direction.
+
+   A number from 0 to 1 (--lt-pos) is animated on the row; every segment works
+   out its own brightness from it. Each direction gives a segment a place along
+   the path (--x) and its distance to the head (--a0 to --a3 behind the head,
+   --q around it, --qp around a train of rings). mod() makes a loop seamless, and
+   "back and forth" flips --lt-dir at the turn so a tail always trails. */
+@property --lt-pos { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --lt-dir { syntax: "<number>"; inherits: true; initial-value: 1; }
+@keyframes lcars-lt-pos { from { --lt-pos: 0; } to { --lt-pos: 1; } }
+@keyframes lcars-lt-bounce { 0%, 100% { --lt-pos: 0; } 50% { --lt-pos: 1; } }
+@keyframes lcars-lt-flip { 0% { --lt-dir: 1; } 50%, 100% { --lt-dir: -1; } }
+
+.lcars-lt[data-dir="right"] .lcars-lt-seg { --x: var(--i, 0); }
+.lcars-lt[data-dir="left"] .lcars-lt-seg { --x: calc(var(--lt-n, 16) - 1 - var(--i, 0)); }
+.lcars-lt[data-dir="out"] .lcars-lt-seg { --x: abs(var(--i, 0) - (var(--lt-n, 16) - 1) / 2); }
+.lcars-lt[data-dir="in"] .lcars-lt-seg { --x: calc((var(--lt-n, 16) - 1) / 2 - abs(var(--i, 0) - (var(--lt-n, 16) - 1) / 2)); }
+.lcars-lt[data-dir="bounce"] .lcars-lt-seg { --x: var(--i, 0); }
+.lcars-lt:is([data-dir="right"], [data-dir="left"], [data-dir="out"], [data-dir="in"]) .lcars-lt-seg {
+  --h: calc(var(--lt-pos) * var(--lt-P, 16));
+  --a0: mod(var(--h) - var(--x), var(--lt-S, 16));
+  --a1: mod(var(--h) - var(--x) - var(--lt-sp, 6), var(--lt-S, 16));
+  --a2: mod(var(--h) - var(--x) - 2 * var(--lt-sp, 6), var(--lt-S, 16));
+  --a3: mod(var(--h) - var(--x) - 3 * var(--lt-sp, 6), var(--lt-S, 16));
+  --q: abs(mod(var(--h) - var(--x) + var(--lt-S, 16) / 2, var(--lt-S, 16)) - var(--lt-S, 16) / 2);
+  --qp: abs(mod(var(--h) - var(--x) + var(--lt-P, 16) / 2, var(--lt-P, 16)) - var(--lt-P, 16) / 2);
+}
+.lcars-lt[data-dir="bounce"] .lcars-lt-seg {
+  --h: calc(var(--lt-pos) * (var(--lt-n, 16) - 1));
+  --a0: calc(var(--lt-dir) * (var(--h) - var(--x)));
+  --a1: calc(var(--lt-dir) * (var(--h) - var(--x)) - var(--lt-sp, 6));
+  --a2: calc(var(--lt-dir) * (var(--h) - var(--x)) - 2 * var(--lt-sp, 6));
+  --a3: calc(var(--lt-dir) * (var(--h) - var(--x)) - 3 * var(--lt-sp, 6));
+  --q: abs(var(--h) - var(--x));
+  --qp: abs(mod(var(--h) - var(--x) + var(--lt-P, 16) / 2, var(--lt-P, 16)) - var(--lt-P, 16) / 2);
+}
+
+/* The animation. A loop makes one trip along the path (or one ring spacing) in
+   --lt-P * --lt-sps seconds; back and forth makes the trip there and back. A
+   behavior that plays once runs one iteration. */
+.lcars-lt:not([data-fx-off~="rest"])[data-mode="rest"]:is([data-beh="constant"], .is-play):is([data-dir="right"], [data-dir="left"], [data-dir="out"], [data-dir="in"]):is([data-rest="chase"], [data-rest="comet"], [data-rest="scanner"], [data-rest="wide"], [data-rest="warp"], [data-rest="pulses"]) {
+  animation: lcars-lt-pos calc(var(--lt-P, 16) * var(--lt-sps, 0.1) * 1s / (var(--lt-rest-speed, 1) * var(--lt-cal, 1))) linear var(--lt-iter, infinite);
+}
+.lcars-lt:not([data-fx-off~="rest"])[data-mode="rest"]:is([data-beh="constant"], .is-play)[data-dir="bounce"]:is([data-rest="chase"], [data-rest="comet"], [data-rest="scanner"], [data-rest="wide"], [data-rest="warp"], [data-rest="pulses"]) {
+  animation: lcars-lt-bounce calc(2 * (var(--lt-n, 16) - 1) * var(--lt-sps, 0.1) * 1s / (var(--lt-rest-speed, 1) * var(--lt-cal, 1))) linear var(--lt-iter, infinite),
+             lcars-lt-flip calc(2 * (var(--lt-n, 16) - 1) * var(--lt-sps, 0.1) * 1s / (var(--lt-rest-speed, 1) * var(--lt-cal, 1))) steps(1, jump-end) var(--lt-iter, infinite);
+}
+.lcars-lt.is-play:not([data-beh="constant"]) { --lt-iter: 1; --lt-iter-h: 3; }
+
+/* The styles. Each is a brightness from 0 to 1, scaled between the resting glow
+   and the peak. The gates below are the same for every style. */
+/* Chase: the head, then an even tail behind it. The leading edge eases in over a bit more than half a segment, so the head glides from segment to segment. */
+.lcars-lt:not([data-fx-off~="rest"])[data-mode="rest"]:is([data-beh="constant"], .is-play)[data-rest="chase"] .lcars-lt-seg {
+  --f: clamp(0, 1 - max(0, var(--a0) - 0.5) / var(--lt-len, 4), 1) * clamp(0, 1 + 1.6 * var(--a0), 1);
+}
+/* A group of lights (2 to 4) adds the followers. */
+.lcars-lt:not([data-fx-off~="rest"])[data-mode="rest"]:is([data-beh="constant"], .is-play)[data-rest="chase"][data-grp="multi"] .lcars-lt-seg {
+  --f: max(
+    clamp(0, 1 - max(0, var(--a0) - 0.5) / var(--lt-len, 4), 1) * clamp(0, 1 + 1.6 * var(--a0), 1),
+    var(--lt-w1, 0) * clamp(0, 1 - max(0, var(--a1) - 0.5) / var(--lt-len, 4), 1) * clamp(0, 1 + 1.6 * var(--a1), 1),
+    var(--lt-w2, 0) * clamp(0, 1 - max(0, var(--a2) - 0.5) / var(--lt-len, 4), 1) * clamp(0, 1 + 1.6 * var(--a2), 1),
+    var(--lt-w3, 0) * clamp(0, 1 - max(0, var(--a3) - 0.5) / var(--lt-len, 4), 1) * clamp(0, 1 + 1.6 * var(--a3), 1));
+}
+/* Comet: a bright head that eases down about 30% over two segments, then a long tail that thins into a wisp. Nothing drops faster than a segment can fade smoothly. */
+.lcars-lt:not([data-fx-off~="rest"])[data-mode="rest"]:is([data-beh="constant"], .is-play)[data-rest="comet"] .lcars-lt-seg {
+  --f: (1 - 0.15 * (1 - cos(pi * clamp(max(0, var(--a0) - 0.5) / 2, 0, 1)))) * pow(clamp(0, 1 - max(0, max(0, var(--a0) - 0.5) - 2) / max(1, var(--lt-len, 4) - 2), 1), 2) * clamp(0, 1 + 1.6 * var(--a0), 1);
+}
+/* A group of comets adds the followers. */
+.lcars-lt:not([data-fx-off~="rest"])[data-mode="rest"]:is([data-beh="constant"], .is-play)[data-rest="comet"][data-grp="multi"] .lcars-lt-seg {
+  --f: max(
+    (1 - 0.15 * (1 - cos(pi * clamp(max(0, var(--a0) - 0.5) / 2, 0, 1)))) * pow(clamp(0, 1 - max(0, max(0, var(--a0) - 0.5) - 2) / max(1, var(--lt-len, 4) - 2), 1), 2) * clamp(0, 1 + 1.6 * var(--a0), 1),
+    var(--lt-w1, 0) * (1 - 0.15 * (1 - cos(pi * clamp(max(0, var(--a1) - 0.5) / 2, 0, 1)))) * pow(clamp(0, 1 - max(0, max(0, var(--a1) - 0.5) - 2) / max(1, var(--lt-len, 4) - 2), 1), 2) * clamp(0, 1 + 1.6 * var(--a1), 1),
+    var(--lt-w2, 0) * (1 - 0.15 * (1 - cos(pi * clamp(max(0, var(--a2) - 0.5) / 2, 0, 1)))) * pow(clamp(0, 1 - max(0, max(0, var(--a2) - 0.5) - 2) / max(1, var(--lt-len, 4) - 2), 1), 2) * clamp(0, 1 + 1.6 * var(--a2), 1),
+    var(--lt-w3, 0) * (1 - 0.15 * (1 - cos(pi * clamp(max(0, var(--a3) - 0.5) / 2, 0, 1)))) * pow(clamp(0, 1 - max(0, max(0, var(--a3) - 0.5) - 2) / max(1, var(--lt-len, 4) - 2), 1), 2) * clamp(0, 1 + 1.6 * var(--a3), 1));
+}
+/* Scanner: a crisp dot with a short, smooth afterglow, nothing ahead of it. */
+.lcars-lt:not([data-fx-off~="rest"])[data-mode="rest"]:is([data-beh="constant"], .is-play)[data-rest="scanner"] .lcars-lt-seg {
+  --f: pow(0.5 * (1 + cos(pi * clamp(0, (var(--a0) - 0.5) / var(--lt-len, 3), 1))), 2) * clamp(0, 1 + 1.6 * var(--a0), 1);
+}
+/* Wide: a wide soft band, smooth as a hill. */
+.lcars-lt:not([data-fx-off~="rest"])[data-mode="rest"]:is([data-beh="constant"], .is-play)[data-rest="wide"] .lcars-lt-seg {
+  --f: 0.5 * (1 + cos(pi * clamp(0, var(--q) / var(--lt-len, 9), 1)));
+}
+/* Warp core: a smooth wave rolls through the row. */
+.lcars-lt:not([data-fx-off~="rest"])[data-mode="rest"]:is([data-beh="constant"], .is-play)[data-rest="warp"] .lcars-lt-seg {
+  --f: 0.5 * (1 + cos(2 * pi * (var(--x) - var(--h)) / var(--lt-P, 16)));
+}
+/* Warp pulses: separate rings of light with dark between them. */
+.lcars-lt:not([data-fx-off~="rest"])[data-mode="rest"]:is([data-beh="constant"], .is-play)[data-rest="pulses"] .lcars-lt-seg {
+  --f: clamp(0, 1 - var(--qp) / var(--lt-len, 5), 1);
+}
+/* The moving layer: one opacity per segment, so the browser only blends layers. */
+.lcars-lt:not([data-fx-off~="rest"])[data-mode="rest"]:is([data-beh="constant"], .is-play):is([data-rest="chase"], [data-rest="comet"], [data-rest="scanner"], [data-rest="wide"], [data-rest="warp"], [data-rest="pulses"]) .lcars-lt-seg::after {
+  opacity: max(var(--lt-rest-min, 0), calc(var(--lt-rest-b, 0.3) * var(--f)));
+}
+/* Heartbeat and breathe move the whole row together. */
+.lcars-lt:not([data-fx-off~="rest"])[data-mode="rest"]:is([data-beh="constant"], .is-play)[data-rest="heartbeat"] .lcars-lt-seg::after {
+  animation: lcars-lt-heart calc(4s / (var(--lt-rest-speed, 1) * var(--lt-cal, 1))) ease-in-out var(--lt-iter-h, infinite);
+}
+@keyframes lcars-lt-heart {
+  0%, 50%, 100% { opacity: var(--lt-rest-min, 0); } 12% { opacity: var(--lt-rest-b, 0.3); }
+  24% { opacity: calc(var(--lt-rest-min, 0) + (var(--lt-rest-b, 0.3) - var(--lt-rest-min, 0)) * 0.3); }
+  32% { opacity: calc(var(--lt-rest-min, 0) + (var(--lt-rest-b, 0.3) - var(--lt-rest-min, 0)) * 0.85); }
+}
+.lcars-lt:not([data-fx-off~="rest"])[data-mode="rest"]:is([data-beh="constant"], .is-play)[data-rest="breathe"] .lcars-lt-seg::after {
+  animation: lcars-lt-breathe-rest calc(6s / (var(--lt-rest-speed, 1) * var(--lt-cal, 1))) ease-in-out var(--lt-iter-h, infinite);
+}
+@keyframes lcars-lt-breathe-rest { 0%, 100% { opacity: var(--lt-rest-min, 0); } 50% { opacity: var(--lt-rest-b, 0.3); } }
+
+/* Data cascade. Each lit segment follows one of four irregular runs of short
+   bursts at different brightness, with its own length and starting point, so
+   nothing repeats in step. Four runs times many lengths is what makes it read
+   as random. */
+.lcars-lt:not([data-fx-off~="rest"])[data-mode="rest"]:is([data-beh="constant"], .is-play)[data-rest="cascade"] .lcars-lt-seg.is-rest-on::after {
+  --sp: calc((var(--lt-rest-b, 0.3) - var(--lt-rest-min, 0)) * (1 + 4.4 * var(--rf, 0)));
+  animation: lcars-lt-cascade-a calc((16s + var(--r, 0.5) * 28s) / (var(--lt-rest-speed, 1) * var(--lt-cal, 1))) steps(1) infinite;
+  animation-delay: calc(var(--r, 0.5) * -61s);
+}
+.lcars-lt:not([data-fx-off~="rest"])[data-mode="rest"]:is([data-beh="constant"], .is-play)[data-rest="cascade"] .lcars-lt-seg.is-rest-on[data-c="1"]::after { animation-name: lcars-lt-cascade-b; }
+.lcars-lt:not([data-fx-off~="rest"])[data-mode="rest"]:is([data-beh="constant"], .is-play)[data-rest="cascade"] .lcars-lt-seg.is-rest-on[data-c="2"]::after { animation-name: lcars-lt-cascade-c; }
+.lcars-lt:not([data-fx-off~="rest"])[data-mode="rest"]:is([data-beh="constant"], .is-play)[data-rest="cascade"] .lcars-lt-seg.is-rest-on[data-c="3"]::after { animation-name: lcars-lt-cascade-d; }
+@keyframes lcars-lt-cascade-a {
+  0% { opacity: var(--lt-rest-min, 0); }
+  2.1% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 1); }
+  2.7% { opacity: var(--lt-rest-min, 0); }
+  4.7% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 1); }
+  6.2% { opacity: var(--lt-rest-min, 0); }
+  18.8% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 1); }
+  23.3% { opacity: var(--lt-rest-min, 0); }
+  31.3% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.5); }
+  35.8% { opacity: var(--lt-rest-min, 0); }
+  36.6% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 1); }
+  37.2% { opacity: var(--lt-rest-min, 0); }
+  56.3% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.5); }
+  58.3% { opacity: var(--lt-rest-min, 0); }
+  59.1% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.7); }
+  60.6% { opacity: var(--lt-rest-min, 0); }
+  69% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 1); }
+  71% { opacity: var(--lt-rest-min, 0); }
+  76.4% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 1); }
+  77.4% { opacity: var(--lt-rest-min, 0); }
+  87% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.8); }
+  89% { opacity: var(--lt-rest-min, 0); }
+  91% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.4); }
+  91.6% { opacity: var(--lt-rest-min, 0); }
+}
+@keyframes lcars-lt-cascade-b {
+  0% { opacity: var(--lt-rest-min, 0); }
+  1.2% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.35); }
+  2.6% { opacity: var(--lt-rest-min, 0); }
+  3.8% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.4); }
+  4.8% { opacity: var(--lt-rest-min, 0); }
+  17.5% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.35); }
+  20.5% { opacity: var(--lt-rest-min, 0); }
+  28.5% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.9); }
+  30.5% { opacity: var(--lt-rest-min, 0); }
+  37.5% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.8); }
+  39.5% { opacity: var(--lt-rest-min, 0); }
+  46.4% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.65); }
+  47% { opacity: var(--lt-rest-min, 0); }
+  56.3% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.35); }
+  57.7% { opacity: var(--lt-rest-min, 0); }
+  58.9% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 1); }
+  59.5% { opacity: var(--lt-rest-min, 0); }
+  74.1% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 1); }
+  75.1% { opacity: var(--lt-rest-min, 0); }
+  86.9% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.45); }
+  88.3% { opacity: var(--lt-rest-min, 0); }
+  89.5% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.7); }
+  90.1% { opacity: var(--lt-rest-min, 0); }
+}
+@keyframes lcars-lt-cascade-c {
+  0% { opacity: var(--lt-rest-min, 0); }
+  5.1% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.35); }
+  8.1% { opacity: var(--lt-rest-min, 0); }
+  10.1% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.4); }
+  11.1% { opacity: var(--lt-rest-min, 0); }
+  19.5% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.5); }
+  20.3% { opacity: var(--lt-rest-min, 0); }
+  21.5% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.4); }
+  23% { opacity: var(--lt-rest-min, 0); }
+  30.9% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.35); }
+  35.4% { opacity: var(--lt-rest-min, 0); }
+  36.2% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 1); }
+  36.8% { opacity: var(--lt-rest-min, 0); }
+  54.5% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.65); }
+  59% { opacity: var(--lt-rest-min, 0); }
+  65.2% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.9); }
+  66.6% { opacity: var(--lt-rest-min, 0); }
+  74.7% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.35); }
+  75.7% { opacity: var(--lt-rest-min, 0); }
+  77.7% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.4); }
+  78.3% { opacity: var(--lt-rest-min, 0); }
+  92.2% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 1); }
+  93% { opacity: var(--lt-rest-min, 0); }
+}
+@keyframes lcars-lt-cascade-d {
+  0% { opacity: var(--lt-rest-min, 0); }
+  3% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 1); }
+  4.4% { opacity: var(--lt-rest-min, 0); }
+  13% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.65); }
+  16% { opacity: var(--lt-rest-min, 0); }
+  16.8% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.4); }
+  17.8% { opacity: var(--lt-rest-min, 0); }
+  26.8% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.9); }
+  28.2% { opacity: var(--lt-rest-min, 0); }
+  30.2% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 1); }
+  31.7% { opacity: var(--lt-rest-min, 0); }
+  42.7% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.65); }
+  45.7% { opacity: var(--lt-rest-min, 0); }
+  51.6% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.9); }
+  52.4% { opacity: var(--lt-rest-min, 0); }
+  61.3% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.35); }
+  62.7% { opacity: var(--lt-rest-min, 0); }
+  64.7% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.4); }
+  65.3% { opacity: var(--lt-rest-min, 0); }
+  74.3% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 1); }
+  77.3% { opacity: var(--lt-rest-min, 0); }
+  84.6% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 1); }
+  87.6% { opacity: var(--lt-rest-min, 0); }
+}
+
+body.lcars-idle .lcars-lt:not([data-fx-off~="idleDim"]) { opacity: 0.5; }
+@media (prefers-reduced-motion: reduce) {
+  .lcars-lt, .lcars-lt *, .lcars-lt *::after { animation: none !important; }
+}
+
+/* Banner caps are a setting (All caps). */
+.lcars-bh-host.is-nocaps .lcars-bh-inner, .lcars-bh-host.is-nocaps .lcars-lt { text-transform: none; }
+
+/* Settings tab: collapsible groups. */
+.lcars-set-sec { border-top: 1px solid var(--background-modifier-border); padding: 0.4em 0; }
+/* The open group's header and its preview stay pinned while its
+   settings scroll under them. */
+.lcars-set-sum {
+  cursor: pointer; font-weight: var(--font-semibold); padding: 0.5em 0; list-style-position: inside;
+  height: 2.4em; box-sizing: border-box; line-height: 1.4em;
+}
+.lcars-set-sec[open] > .lcars-set-sum { position: sticky; top: 0; z-index: 3; background: var(--background-primary); }
+.lcars-set-sec[open] > .lcars-set-body > .lcars-set-preview { position: sticky; top: 2.4em; z-index: 2; box-shadow: 0 6px 0 var(--background-primary); }
+.lcars-set-current {
+  margin-left: 0.6em; padding: 0.05em 0.5em; border-radius: 999px; font-size: 0.75em; letter-spacing: 0.05em;
+  background: var(--interactive-accent); color: var(--text-on-accent);
+}
+.lcars-set-current.is-preview { background: var(--lcars-yellow, #ffcc33); color: var(--lcars-ink, #000); }
+.lcars-set-current[hidden] { display: none; }
+.lcars-set-desc { margin: 0 0 0.4em; }
+.lcars-set-body > .setting-item:first-child { border-top: none; }
+/* Inline previews in settings: a dark strip like the sidebar. */
+.lcars-set-preview {
+  margin: 0.3em 0 0.6em; padding: 10px 12px; border-radius: 8px; background: var(--lcars-void, #000);
+  font-family: var(--lcars-heading-font, "Antonio", sans-serif); font-size: 20px;
+}
+.lcars-set-preview .lcars-lt { margin-top: 0; }
+
+/* Banner copies off screen pause their animations. */
+.lcars-bh-host.is-offscreen *, .lcars-bh-host.is-offscreen *::after { animation-play-state: paused !important; }
+
+/* Settings scroll fix. The pinned header and live preview change every
+   second; the browser's scroll anchoring treated them as the spot to
+   hold and kept pulling the page back up. Anchoring is off inside this
+   tab, and the tab ends with room to scroll the last setting clear of
+   the pinned header. */
+.vertical-tab-content:has(.lcars-set-sec), .lcars-set-sec, .lcars-set-body, .lcars-set-preview { overflow-anchor: none; }
+.vertical-tab-content:has(.lcars-set-sec) { padding-bottom: 12em; }
+
+/* Settings tabs (the Companion page). The tab bar and the lights preview
+   stay pinned while the settings scroll under them. */
+.lcars-set-page { overflow-anchor: none; padding-bottom: 6em; }
+.lcars-set-page > .lcars-set-preview { overflow-anchor: none; }
+.lcars-set-tabs {
+  position: sticky; z-index: 3; display: flex; flex-wrap: nowrap; align-items: center; gap: 6px; overflow-x: auto;
+  top: calc(-1 * var(--lcars-set-pad, 0px)); margin: calc(-1 * var(--lcars-set-pad, 0px)) 0 0.4em;
+  padding-top: var(--lcars-set-pad, 0px); height: 2.6em; box-sizing: content-box;
+  background: var(--background-primary); border-bottom: 1px solid var(--background-modifier-border);
+}
+.lcars-set-tab {
+  flex: none; height: auto; padding: 0.15em 0.9em; border: 1px solid var(--background-modifier-border); border-radius: 999px;
+  background: transparent; box-shadow: none; color: var(--text-muted); cursor: pointer;
+}
+.lcars-set-tab:hover { color: var(--text-normal); }
+.lcars-set-tab.is-active { background: var(--interactive-accent); border-color: var(--interactive-accent); color: var(--text-on-accent); }
+.lcars-set-page > .lcars-set-preview.is-pinned { position: sticky; top: 2.6em; z-index: 2; box-shadow: 0 6px 0 var(--background-primary); }
+.lcars-set-page .setting-item-heading .lcars-set-current { vertical-align: 0.1em; }
+
+/* A second plugin's mark on the settings page: a banner at the top, and a badge
+   with a sentence on every setting or status it changes or depends on.
+   Orange: the plugin changes it. Red: it needs the plugin. */
+.lcars-sbx-banner {
+  display: flex; align-items: flex-start; gap: 0.7em; margin: 0 0 0.6em; padding: 0.5em 0.8em; border-radius: 6px;
+  border: 1px solid var(--lcars-ribbon-right-bright, #ff977b); background: color-mix(in srgb, var(--lcars-ribbon-right-bright, #ff977b) 12%, var(--background-primary));
+  font-size: var(--font-ui-small);
+}
+.lcars-sbx-legend { margin-top: 0.3em; color: var(--text-muted); }
+.lcars-sbx-badge {
+  display: inline-block; flex: none; margin-left: 0.5em; padding: 0.05em 0.55em; border-radius: 999px; vertical-align: 0.1em;
+  font-size: 0.7em; font-weight: var(--font-semibold); letter-spacing: 0.06em; text-transform: uppercase;
+  background: var(--lcars-ribbon-right-bright, #ff977b); color: var(--lcars-ink, #000);
+}
+.lcars-sbx-badge.is-dependent { background: var(--lcars-alert, #d13438); color: var(--lcars-bh-text, #fff); }
+.lcars-sbx-banner > .lcars-sbx-badge { margin-left: 0; margin-top: 0.15em; }
+.lcars-sbx-legend .lcars-sbx-badge { margin-left: 0; }
+.lcars-sbx-note { margin-top: 0.2em; color: var(--lcars-ribbon-right-bright, #ff977b); font-size: var(--font-ui-smaller); }
+.lcars-sbx-note.is-dependent { color: var(--lcars-alert, #d13438); }
+.lcars-set-tab .lcars-sbx-badge { margin-left: 0.4em; font-size: 0.62em; }
+
+/* The color legend in the Running lights tab: the same mix the lights use. */
+.lcars-set-legend { display: flex; flex-wrap: wrap; gap: 14px; margin: 0.3em 0 0.8em; }
+.lcars-set-chip { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: var(--font-ui-smaller); color: var(--text-muted); }
+.lcars-set-chip > i { display: block; width: 4em; height: 1.2em; border-radius: 999px; border: 1px solid var(--background-modifier-border); }
+.lcars-set-chip[data-k="empty"] > i { background: var(--lg-empty); }
+.lcars-set-chip[data-k="c1"] > i { background: color-mix(in srgb, var(--lg-c1) 100%, var(--lg-empty)); }
+.lcars-set-chip[data-k="c2"] > i { background: color-mix(in srgb, var(--lg-c2) 100%, var(--lg-empty)); }
+.lcars-set-chip[data-k="glow"] > i { background: color-mix(in srgb, var(--lg-c1) calc(var(--lg-min) * 100%), var(--lg-empty)); }
+.lcars-set-chip[data-k="light"] > i { background: color-mix(in srgb, var(--lg-light) calc(var(--lg-max) * 100%), color-mix(in srgb, var(--lg-c1) calc(var(--lg-min) * 100%), var(--lg-empty))); }
+.lcars-set-chip[data-k="peak"] > i { background: color-mix(in srgb, var(--lg-c1) calc(var(--lg-max) * 100%), var(--lg-empty)); }
+
+/* Label scroll: long text slides instead of being cut. */
+.lcars-lt-label.is-scroll { text-overflow: clip; }
+.lcars-lt-scroll { display: inline-block; white-space: nowrap; animation: lcars-lt-scroll var(--sdur, 6s) ease-in-out infinite alternate; }
+@keyframes lcars-lt-scroll { 0%, 12% { transform: translateX(0); } 88%, 100% { transform: translateX(var(--sd, 0)); } }
+@media (prefers-reduced-motion: reduce) { .lcars-lt-label { transition: none; } }
+
+/* Wide settings: the entry box gets its own full-width row. */
+.lcars-wide.setting-item { flex-wrap: wrap; }
+.lcars-wide .setting-item-info { flex: 1 1 100%; max-width: 100%; }
+.lcars-wide .setting-item-control { flex: 1 1 100%; justify-content: stretch; }
+.lcars-wide textarea { width: 100%; min-width: 0; resize: vertical; }
+/* Reference list: capped so it never pushes the form around. */
+.lcars-ref { margin: 0.4em 0 0.8em; padding: 0.4em 0.8em; border: 1px solid var(--background-modifier-border); border-radius: 4px; font-size: 0.85em; }
+.lcars-ref-head { font-weight: 600; margin-bottom: 0.2em; }
+.lcars-ref ul { margin: 0; padding-left: 1.2em; }
+.lcars-ref li { margin: 0.15em 0; }
+
+/* Alert modes (section 4). The CONDITION value and its icon take the
+   status color from --lc-cond. Each status's animation (speed, on/off
+   timing) is written by the plugin into #lcars-cond-style; the shared
+   keyframes are here. The fade runs on the value and icon, the effect on
+   the text, so they never fight over the same property. */
+.lcars-bh-cond[data-cond] .lcars-bh-condval { color: var(--lc-cond, var(--lcars-bh-text, #F3F4F7)); }
+.lcars-bh-cond[data-cond] svg { stroke: var(--lc-cond, var(--lcars-bh-text, #F3F4F7)); }
+.lcars-bh-cond[data-fade="fade"] .lcars-bh-condval { animation: lcars-cond-fade var(--lc-fade-dur, 3s) ease var(--lc-fade-delay, 5s) both; }
+.lcars-bh-cond[data-fade="fade"] svg { animation: lcars-cond-fade-svg var(--lc-fade-dur, 3s) ease var(--lc-fade-delay, 5s) both; }
+.lcars-bh-cond[data-fade="fade"][data-flip="1"] .lcars-bh-condval { animation-name: lcars-cond-fade-b; }
+.lcars-bh-cond[data-fade="fade"][data-flip="1"] svg { animation-name: lcars-cond-fade-svg-b; }
+@keyframes lcars-cond-fade { from { color: var(--lc-cond); } to { color: var(--lc-fade-to); } }
+@keyframes lcars-cond-fade-b { from { color: var(--lc-cond); } to { color: var(--lc-fade-to); } }
+@keyframes lcars-cond-fade-svg { from { stroke: var(--lc-cond); } to { stroke: var(--lc-fade-to); } }
+@keyframes lcars-cond-fade-svg-b { from { stroke: var(--lc-cond); } to { stroke: var(--lc-fade-to); } }
+@keyframes lcars-cond-pulse { 50% { opacity: 0.4; } }
+@keyframes lcars-cond-flash { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0.12; } }
+@keyframes lcars-cond-flicker {
+  0%, 7%, 11%, 33%, 36%, 61%, 66%, 100% { opacity: 1; } 8% { opacity: 0.25; } 10% { opacity: 0.8; }
+  34% { opacity: 0.45; } 62% { opacity: 0.15; } 64% { opacity: 0.9; } 65% { opacity: 0.3; }
+}
+@keyframes lcars-cond-glow { 0%, 100% { text-shadow: 0 0 0 transparent; } 50% { text-shadow: 0 0 0.55em currentColor, 0 0 0.15em currentColor; } }
+@keyframes lcars-cond-scan { from { background-position: 100% 0; } to { background-position: 0 0; } }
+.lcars-bh-cond[data-effect="scan"] .lcars-bh-condtext {
+  background: linear-gradient(100deg, var(--lc-cond) 35%, var(--lcars-bh-text, #fff) 50%, var(--lc-cond) 65%) 100% 0 / 300% 100% no-repeat;
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+body.lcars-idle .lcars-bh-cond { opacity: 0.6; }
+@media (prefers-reduced-motion: reduce) {
+  .lcars-bh-cond, .lcars-bh-cond * { animation: none !important; }
+  .lcars-bh-cond[data-effect="scan"] .lcars-bh-condtext { background: none; color: var(--lc-cond); }
+}
+
+/* Tint: the lights and the divider dot follow the condition color. */
+.lcars-bh-host[data-tint] .lcars-bh-dot { color: var(--lt-cond); }
+/* The state's color reaches the lights through its look (see look() in main.js), so the tint only recolors the dot. */
+
+/* Settings: one collapsible per status. */
+.lcars-set-status { border: 1px solid var(--background-modifier-border); border-radius: 4px; margin: 0.4em 0; padding: 0 0.8em; }
+.lcars-set-status > summary { cursor: pointer; padding: 0.5em 0; font-weight: var(--font-semibold); }
+.lcars-set-dot { display: inline-block; width: 0.8em; height: 0.8em; border-radius: 50%; vertical-align: -0.05em; }
+.lcars-set-note { font-weight: normal; color: var(--text-muted); }
+.lcars-set-demo { text-transform: uppercase; }
+.lcars-set-demo .lcars-bh-cond { display: inline-flex; }
+.lcars-set-demo .lcars-bh-dim { color: var(--lcars-dim, #9EA5BA); }
+.lcars-set-demo .lcars-bh-value { color: var(--lcars-bh-text, #F3F4F7); }
+.lcars-set-demo .lcars-bh-cond svg { width: 0.8em; height: 0.8em; }
+
+/* The word hugs its text and slides when the label changes. */
+.lcars-bh-condval { display: inline-block; white-space: nowrap; transition: width 0.35s ease; }
+.lcars-bh-condval.is-sliding { overflow: hidden; }
+.lcars-bh-condtext { display: inline-block; }
+@media (prefers-reduced-motion: reduce) { .lcars-bh-condval { transition: none; } }
+
+/* Sidebar mount (2026-10-06): the banner is the first child of a left
+   sidebar tab container. Stack it above the panes and let the active
+   pane take the rest of the height. */
+.lcars-bh-parent {
+  display: flex;
+  flex-direction: column;
+}
+.lcars-bh-parent > .lcars-bh-host {
+  flex: 0 0 auto;
+}
+.lcars-bh-parent > .workspace-leaf {
+  flex: 1 1 0;
+  min-height: 0;
+  width: 100%;
+}
+
+/* Corner mount (2026-10-06): the banner spans the left ribbon and the
+   left sidebar from the top of the workspace. The ribbon and the
+   sidebar make room through --lcars-bh-h (set by the plugin). */
+.lcars-bh-corner { position: relative; }
+.lcars-bh-corner > .lcars-bh-host.is-corner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: auto;
+  z-index: 20;
+}
+.lcars-bh-host.is-hidden { display: none; }
+
+/* Corner banner band (2026-10-06): the top --lcars-bh-band of the banner
+   is left clear, so the frame behind it shows through and nothing is
+   hidden. Only the version line is drawn there: light gray, small, flush
+   right above the registry number, dropped by --lcars-bh-ver-drop. */
+.lcars-bh-host.is-corner.has-band {
+  background: linear-gradient(to bottom, transparent var(--lcars-bh-band), var(--lcars-gap-color, #000) 0);
+}
+.lcars-bh-host.is-corner.has-band .lcars-bh-version {
+  position: absolute;
+  top: var(--lcars-bh-ver-drop, 4px);
+  right: var(--lcars-bh-pad-x, 10px);
+  left: auto;
+  width: auto;
+  height: var(--lcars-bh-band);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  text-align: right;
+  margin: 0;
+  padding: var(--lcars-bh-ver-pad, 4px);
+  font-size: 11px;
+  line-height: 1;
+  color: var(--lcars-bh-label, #c4c8d2);
+  opacity: 1;
+  background: none;
+}
+
+/* Corner banner: no side padding, so the text runs edge to edge. */
+.lcars-bh-host.is-corner .lcars-bh-inner { padding-left: var(--lcars-bh-corner-pad-x, 1px); padding-right: var(--lcars-bh-corner-pad-x, 1px); }
+.lcars-bh-host.is-corner.has-band .lcars-bh-version { right: var(--lcars-bh-corner-pad-x, 1px); }
+
+/* Notebook Navigator's navigation pane: black while it scrolls, so the
+   scrollbar sits on black instead of NN's gray. The class is set by the
+   plugin (syncNnScroll). */
+.nn-navigation-pane-scroller.lcars-overflow {
+  background-color: var(--lcars-gap-color, #000);
+}
+
+/* Tactical readouts: a state's own meters in the ship status block. For
+   show, not measurements, so their bars may move. They take the state's color. */
+.lcars-subsys-row.is-tactical .lcars-subsys-fill { background: var(--lt-cond, var(--lcars-readout-fill, #37a6d1)); transform-origin: left center; animation: none; }
+.lcars-subsys-row.is-tactical .lcars-subsys-val { color: var(--lcars-bh-text, #f3f4f7); }
+.lcars-subsys-row.is-tactical[data-off] .lcars-subsys-val { color: var(--lcars-dim, #9ea5ba); }
+.lcars-subsys-row.is-tactical[data-fx="shimmer"] .lcars-subsys-fill { animation: lcars-tac-shimmer 3.1s steps(1) infinite; }
+.lcars-subsys-row.is-tactical[data-fx="pulse"] .lcars-subsys-fill { animation: lcars-tac-pulse 1.6s ease-in-out infinite; }
+.lcars-subsys-row.is-tactical[data-fx="breathe"] .lcars-subsys-fill { animation: lcars-tac-breathe 5.3s ease-in-out infinite; }
+.lcars-subsys-row.is-tactical[data-fx="scan"] .lcars-subsys-fill { animation: lcars-tac-scan 2.6s linear infinite; }
+.lcars-subsys-row.is-tactical[data-fx="fill"] .lcars-subsys-fill { width: 100%; animation: lcars-tac-fill 2.8s ease-out infinite; }
+@keyframes lcars-tac-shimmer { 0%, 100% { opacity: 1; } 46% { opacity: 1; } 50% { opacity: 0.5; } 54% { opacity: 1; } 81% { opacity: 0.8; } 85% { opacity: 1; } }
+@keyframes lcars-tac-pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+@keyframes lcars-tac-breathe { 0%, 100% { transform: scaleX(0.8); } 50% { transform: scaleX(1); } }
+@keyframes lcars-tac-scan { 0% { transform: translateX(-100%); } 100% { transform: translateX(340%); } }
+@keyframes lcars-tac-fill { 0% { transform: scaleX(0); } 80%, 100% { transform: scaleX(1); } }
+@media (prefers-reduced-motion: reduce) { .lcars-subsys-row.is-tactical .lcars-subsys-fill { animation: none !important; } }
+/* The version line links to the repo. Hide .lcars-bh-version in a snippet to remove it. */
+.lcars-bh-version a, .lcars-bh-version a:hover { color: inherit; text-decoration: none; }
+.lcars-bh-version a:hover { text-decoration: underline; }
+/* Settings under a channel switch sit indented, and code boxes are monospace. */
+.lcars-set-sub { padding-left: 1.6em; }
+textarea.lcars-code { width: 100%; font-family: var(--font-monospace); font-size: var(--font-ui-smaller); }
+.lcars-slider-val { display: inline-block; min-width: 2.2em; margin-left: 0.6em; text-align: right; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+/* The Caps picker: three segments drawn with each kind of end. */
+.lcars-caps { display: flex; gap: 8px; }
+.lcars-cap {
+  display: flex; flex-direction: column; align-items: center; gap: 5px; height: auto; padding: 8px 10px; box-shadow: none;
+  border: 1px solid var(--background-modifier-border); border-radius: 6px; background: transparent; color: var(--text-muted); cursor: pointer;
+  font-size: var(--font-ui-smaller);
+}
+.lcars-cap:hover { color: var(--text-normal); }
+.lcars-cap.is-on { border-color: var(--interactive-accent); color: var(--text-normal); }
+.lcars-cap.is-on svg { color: var(--interactive-accent); }
+
+/* Expandable sections inside a contributed tab (no pinning, so they sit under the tab bar). */
+.lcars-set-acc { border-top: 1px solid var(--background-modifier-border); padding: 0.2em 0; }
+.lcars-set-acc > summary { cursor: pointer; font-weight: var(--font-semibold); padding: 0.55em 0; }
+.lcars-set-acc-desc { margin: 0 0 0.4em; }
+.lcars-set-acc > .lcars-set-body > .setting-item:first-child { border-top: none; }
+/* A notice that stays under the tab bar. Opaque, so the page does not show through. */
+.lcars-sbx-banner.is-sticky { position: sticky; top: 2.6em; z-index: 2; margin-top: 0; }
+.lcars-sbx-banner.is-dependent { border-color: var(--lcars-alert, #d13438); background: color-mix(in srgb, var(--lcars-alert, #d13438) 14%, var(--background-primary)); }
+/* How the lights work. */
+.lcars-set-anatomy { margin: 0 0 0.8em; padding: 0.4em 0.8em; border: 1px solid var(--background-modifier-border); border-radius: 6px; }
+.lcars-set-anatomy > summary { cursor: pointer; font-weight: var(--font-semibold); }
+.lcars-anat { position: relative; display: grid; grid-template-columns: repeat(14, 1fr); gap: 2px; margin: 0.7em 0 0.2em; }
+.lcars-anat-seg { height: 0.9em; border-radius: 3px; }
+.lcars-anat-seg.is-empty { background: var(--lg-empty); }
+.lcars-anat-seg.is-lit { background: color-mix(in srgb, var(--lg-c2) calc(var(--k, 0) * 100%), var(--lg-c1)); }
+/* The moving light is one segment wide and slides across the lit part and back; its label slides with it. */
+.lcars-anat-light { position: absolute; top: 0; left: calc(3 * ((100% - 26px) / 14 + 2px)); width: calc((100% - 26px) / 14); height: 0.9em; border-radius: 3px; background: var(--lg-light); animation: lcars-anat-run 3.6s ease-in-out infinite; }
+.lcars-anat-names { display: grid; grid-template-columns: repeat(14, 1fr); gap: 2px; font-size: var(--font-ui-smaller); color: var(--text-muted); }
+.lcars-anat-run { position: relative; height: 1.3em; font-size: var(--font-ui-smaller); color: var(--text-muted); margin-bottom: 0.4em; }
+.lcars-anat-runlabel { position: absolute; top: 0; left: calc(3 * ((100% - 26px) / 14 + 2px)); width: calc((100% - 26px) / 14); display: flex; justify-content: center; animation: lcars-anat-run 3.6s ease-in-out infinite; }
+.lcars-anat-runlabel > span { white-space: nowrap; }
+@keyframes lcars-anat-run { 0%, 8% { transform: translateX(0); } 50%, 58% { transform: translateX(calc(700% + 14px)); } 100% { transform: translateX(0); } }
+body:is(.lcars-motion-off, .lcars-plugin-motion-off) :is(.lcars-anat-light, .lcars-anat-runlabel) { animation: none; }
+.lcars-anat-list { margin: 0.3em 0 0 1.2em; padding: 0; font-size: var(--font-ui-smaller); color: var(--text-muted); }
+
+/* MOTION-OFF begin (generated by tools/gen_motion_off.py; edit the generator or the rules above, not this block) */
+/* The status text effects are written into a style tag at run time (see
+   condCss in main.js), so they cannot be found here. This covers them. */
+body:is(.lcars-motion-off, .lcars-plugin-motion-off) .lcars-bh-cond .lcars-bh-condtext {
+  animation: none !important;
+}
+body:is(.lcars-motion-off, .lcars-plugin-motion-off) .lcars-lt:not([data-fx-off~="chase"])[data-shape="C"]:is([data-motion="fixed"], [data-motion="speedup"]):not([data-mode="rest"]) .lcars-lt-seg.is-on::after,
+body:is(.lcars-motion-off, .lcars-plugin-motion-off) .lcars-lt:not([data-fx-off~="chase"])[data-shape="E"]:is([data-motion="fixed"], [data-motion="speedup"]):not([data-mode="rest"]) .lcars-lt-seg::after,
+body:is(.lcars-motion-off, .lcars-plugin-motion-off) .lcars-lt:not([data-fx-off~="breathe"])[data-motion="breathe"]:not([data-mode="rest"]) .lcars-lt-bars,
+body:is(.lcars-motion-off, .lcars-plugin-motion-off) .lcars-lt.is-final:not([data-fx-off~="blink"])[data-final="blink"] .lcars-lt-bars,
+body:is(.lcars-motion-off, .lcars-plugin-motion-off) .lcars-lt.is-final:not([data-fx-off~="pulse"])[data-final="pulse"] .lcars-lt-bars,
+body:is(.lcars-motion-off, .lcars-plugin-motion-off) .lcars-lt:not([data-fx-off~="rest"])[data-mode="rest"]:is([data-beh="constant"], .is-play):is([data-dir="right"], [data-dir="left"], [data-dir="out"], [data-dir="in"]):is([data-rest="chase"], [data-rest="comet"], [data-rest="scanner"], [data-rest="wide"], [data-rest="warp"], [data-rest="pulses"]),
+body:is(.lcars-motion-off, .lcars-plugin-motion-off) .lcars-lt:not([data-fx-off~="rest"])[data-mode="rest"]:is([data-beh="constant"], .is-play)[data-dir="bounce"]:is([data-rest="chase"], [data-rest="comet"], [data-rest="scanner"], [data-rest="wide"], [data-rest="warp"], [data-rest="pulses"]),
+body:is(.lcars-motion-off, .lcars-plugin-motion-off) .lcars-lt:not([data-fx-off~="rest"])[data-mode="rest"]:is([data-beh="constant"], .is-play)[data-rest="heartbeat"] .lcars-lt-seg::after,
+body:is(.lcars-motion-off, .lcars-plugin-motion-off) .lcars-lt:not([data-fx-off~="rest"])[data-mode="rest"]:is([data-beh="constant"], .is-play)[data-rest="breathe"] .lcars-lt-seg::after,
+body:is(.lcars-motion-off, .lcars-plugin-motion-off) .lcars-lt:not([data-fx-off~="rest"])[data-mode="rest"]:is([data-beh="constant"], .is-play)[data-rest="cascade"] .lcars-lt-seg.is-rest-on::after,
+body:is(.lcars-motion-off, .lcars-plugin-motion-off) .lcars-lt:not([data-fx-off~="rest"])[data-mode="rest"]:is([data-beh="constant"], .is-play)[data-rest="cascade"] .lcars-lt-seg.is-rest-on[data-c="1"]::after,
+body:is(.lcars-motion-off, .lcars-plugin-motion-off) .lcars-lt:not([data-fx-off~="rest"])[data-mode="rest"]:is([data-beh="constant"], .is-play)[data-rest="cascade"] .lcars-lt-seg.is-rest-on[data-c="2"]::after,
+body:is(.lcars-motion-off, .lcars-plugin-motion-off) .lcars-lt:not([data-fx-off~="rest"])[data-mode="rest"]:is([data-beh="constant"], .is-play)[data-rest="cascade"] .lcars-lt-seg.is-rest-on[data-c="3"]::after,
+body:is(.lcars-motion-off, .lcars-plugin-motion-off) .lcars-lt-scroll,
+body:is(.lcars-motion-off, .lcars-plugin-motion-off) .lcars-bh-cond[data-fade="fade"] .lcars-bh-condval,
+body:is(.lcars-motion-off, .lcars-plugin-motion-off) .lcars-bh-cond[data-fade="fade"] svg,
+body:is(.lcars-motion-off, .lcars-plugin-motion-off) .lcars-bh-cond[data-fade="fade"][data-flip="1"] .lcars-bh-condval,
+body:is(.lcars-motion-off, .lcars-plugin-motion-off) .lcars-bh-cond[data-fade="fade"][data-flip="1"] svg,
+body:is(.lcars-motion-off, .lcars-plugin-motion-off) .lcars-subsys-row.is-tactical .lcars-subsys-fill,
+body:is(.lcars-motion-off, .lcars-plugin-motion-off) .lcars-subsys-row.is-tactical[data-fx="shimmer"] .lcars-subsys-fill,
+body:is(.lcars-motion-off, .lcars-plugin-motion-off) .lcars-subsys-row.is-tactical[data-fx="pulse"] .lcars-subsys-fill,
+body:is(.lcars-motion-off, .lcars-plugin-motion-off) .lcars-subsys-row.is-tactical[data-fx="breathe"] .lcars-subsys-fill,
+body:is(.lcars-motion-off, .lcars-plugin-motion-off) .lcars-subsys-row.is-tactical[data-fx="scan"] .lcars-subsys-fill,
+body:is(.lcars-motion-off, .lcars-plugin-motion-off) .lcars-subsys-row.is-tactical[data-fx="fill"] .lcars-subsys-fill {
+  animation: none !important;
+}
+body:is(.lcars-motion-off, .lcars-plugin-motion-off) .lcars-lt { animation: none !important; }
+body:is(.lcars-motion-off, .lcars-plugin-motion-off) .lcars-lt * { animation: none !important; }
+body:is(.lcars-motion-off, .lcars-plugin-motion-off) .lcars-lt *::after, body:is(.lcars-motion-off, .lcars-plugin-motion-off) .lcars-lt *::before { animation: none !important; }
+body:is(.lcars-motion-off, .lcars-plugin-motion-off) .lcars-lt-label { transition: none; }
+body:is(.lcars-motion-off, .lcars-plugin-motion-off) .lcars-bh-cond { animation: none !important; }
+body:is(.lcars-motion-off, .lcars-plugin-motion-off) .lcars-bh-cond * { animation: none !important; }
+body:is(.lcars-motion-off, .lcars-plugin-motion-off) .lcars-bh-cond[data-effect="scan"] .lcars-bh-condtext { background: none; color: var(--lc-cond); }
+body:is(.lcars-motion-off, .lcars-plugin-motion-off) .lcars-bh-condval { transition: none; }
+body:is(.lcars-motion-off, .lcars-plugin-motion-off) .lcars-subsys-row.is-tactical .lcars-subsys-fill { animation: none !important; }
+/* MOTION-OFF end */
+/* A caption above a preview strip, saying what it shows. */
+.lcars-pv-cap { margin: 0.5em 0 0.1em; font-size: var(--font-ui-smaller); color: var(--text-muted); }
+
+/* Sub-tabs inside the Running lights tab: not sticky, smaller than the main bar. */
+.lcars-set-tabs.lcars-subtabs { position: static; margin: 0.6em 0 0.8em; padding-top: 0; height: auto; flex-wrap: wrap; border-bottom: 0; }
+
+/* Row styles. Rectangle: a continuous bar with square ends. Circle: round dots,
+   sized by the bar height (or by the width when it is short), spread across the
+   whole width. Data cascade rows: the same height split into 2 or 3 rows. */
+.lcars-lt[data-form="rect"] .lcars-lt-bar { border-radius: 0; }
+.lcars-lt[data-form="circle"] .lcars-lt-bar { container-type: inline-size; justify-content: space-between; align-items: center; height: auto; }
+.lcars-lt[data-form="circle"] .lcars-lt-seg {
+  flex: 0 0 auto; --lt-d: min(max(5px, 0.7em), calc(100cqw / var(--lt-n, 16)));
+  width: var(--lt-d); height: var(--lt-d);
+}
+.lcars-lt[data-form="circle"] .lcars-lt-seg,
+.lcars-lt[data-form="circle"] .lcars-lt-seg::after,
+.lcars-lt[data-form="circle"] .lcars-lt-seg:first-child,
+.lcars-lt[data-form="circle"] .lcars-lt-seg:first-child::after,
+.lcars-lt[data-form="circle"] .lcars-lt-seg:last-child,
+.lcars-lt[data-form="circle"] .lcars-lt-seg:last-child::after { border-radius: 50% !important; }
+.lcars-lt[style*="--lt-rows"] .lcars-lt-bar { height: calc((max(5px, 0.7em) - 3px * (var(--lt-rows) - 1)) / var(--lt-rows)); }
+.lcars-lt { --lt-h: max(5px, 0.7em); }
+.lcars-lt[style*="--lt-rows"] { --lt-h: calc((max(5px, 0.7em) - 3px * (var(--lt-rows) - 1)) / var(--lt-rows)); }
+.lcars-lt[style*="--lt-rows"] .lcars-lt-bar { height: var(--lt-h); }
+.lcars-lt[data-form="circle"] .lcars-lt-bar { height: auto; }
+.lcars-lt[data-form="circle"] .lcars-lt-seg { --lt-d: min(var(--lt-h), calc(100cqw / var(--lt-n, 16))); }
+/* Second pass: fixed-size dots whose count follows the width (circleSync), and
+   cascade rows that make the module taller instead of dividing its height. */
+.lcars-lt[data-form="circle"] .lcars-lt-bar { container-type: normal; height: var(--lt-h); }
+.lcars-lt[data-form="circle"] .lcars-lt-seg { --lt-d: var(--lt-h); width: var(--lt-h); height: var(--lt-h); }
+.lcars-lt[style*="--lt-rows"] { --lt-h: max(4px, 0.55em); }
+.lcars-lt[style*="--lt-rows"] .lcars-lt-bar { height: var(--lt-h); }
+
+/* Data cascade: how busy. Calm is the original schedule; the others stretch each burst. */
+@keyframes lcars-lt-cascade-a2 {
+  0%% { opacity: var(--lt-rest-min, 0); }
+  2.1% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 1); }
+  4.1% { opacity: var(--lt-rest-min, 0); }
+  4.7% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 1); }
+  8.1% { opacity: var(--lt-rest-min, 0); }
+  18.8% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 1); }
+  27.0% { opacity: var(--lt-rest-min, 0); }
+  31.3% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.5); }
+  36.2% { opacity: var(--lt-rest-min, 0); }
+  36.6% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 1); }
+  38.6% { opacity: var(--lt-rest-min, 0); }
+  56.3% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.5); }
+  58.7% { opacity: var(--lt-rest-min, 0); }
+  59.1% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.7); }
+  62.5% { opacity: var(--lt-rest-min, 0); }
+  69.0% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 1); }
+  73.2% { opacity: var(--lt-rest-min, 0); }
+  76.4% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 1); }
+  79.0% { opacity: var(--lt-rest-min, 0); }
+  87.0% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.8); }
+  90.6% { opacity: var(--lt-rest-min, 0); }
+  91.0% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.4); }
+  93.0% { opacity: var(--lt-rest-min, 0); }
+}
+@keyframes lcars-lt-cascade-a3 {
+  0%% { opacity: var(--lt-rest-min, 0); }
+  2.1% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 1); }
+  4.3% { opacity: var(--lt-rest-min, 0); }
+  4.7% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 1); }
+  10.4% { opacity: var(--lt-rest-min, 0); }
+  18.8% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 1); }
+  30.9% { opacity: var(--lt-rest-min, 0); }
+  31.3% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.5); }
+  36.2% { opacity: var(--lt-rest-min, 0); }
+  36.6% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 1); }
+  40.2% { opacity: var(--lt-rest-min, 0); }
+  56.3% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.5); }
+  58.7% { opacity: var(--lt-rest-min, 0); }
+  59.1% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.7); }
+  64.8% { opacity: var(--lt-rest-min, 0); }
+  69.0% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 1); }
+  75.8% { opacity: var(--lt-rest-min, 0); }
+  76.4% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 1); }
+  80.9% { opacity: var(--lt-rest-min, 0); }
+  87.0% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.8); }
+  90.6% { opacity: var(--lt-rest-min, 0); }
+  91.0% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.4); }
+  94.6% { opacity: var(--lt-rest-min, 0); }
+}
+@keyframes lcars-lt-cascade-a4 {
+  0%% { opacity: var(--lt-rest-min, 0); }
+  2.1% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 1); }
+  4.3% { opacity: var(--lt-rest-min, 0); }
+  4.7% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 1); }
+  12.7% { opacity: var(--lt-rest-min, 0); }
+  18.8% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 1); }
+  30.9% { opacity: var(--lt-rest-min, 0); }
+  31.3% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.5); }
+  36.2% { opacity: var(--lt-rest-min, 0); }
+  36.6% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 1); }
+  41.9% { opacity: var(--lt-rest-min, 0); }
+  56.3% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.5); }
+  58.7% { opacity: var(--lt-rest-min, 0); }
+  59.1% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.7); }
+  67.1% { opacity: var(--lt-rest-min, 0); }
+  69.0% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 1); }
+  76.0% { opacity: var(--lt-rest-min, 0); }
+  76.4% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 1); }
+  82.9% { opacity: var(--lt-rest-min, 0); }
+  87.0% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.8); }
+  90.6% { opacity: var(--lt-rest-min, 0); }
+  91.0% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.4); }
+  96.3% { opacity: var(--lt-rest-min, 0); }
+}
+@keyframes lcars-lt-cascade-b2 {
+  0%% { opacity: var(--lt-rest-min, 0); }
+  1.2% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.35); }
+  3.4% { opacity: var(--lt-rest-min, 0); }
+  3.8% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.4); }
+  6.4% { opacity: var(--lt-rest-min, 0); }
+  17.5% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.35); }
+  23.3% { opacity: var(--lt-rest-min, 0); }
+  28.5% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.9); }
+  32.7% { opacity: var(--lt-rest-min, 0); }
+  37.5% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.8); }
+  41.7% { opacity: var(--lt-rest-min, 0); }
+  46.4% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.65); }
+  48.4% { opacity: var(--lt-rest-min, 0); }
+  56.3% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.35); }
+  58.5% { opacity: var(--lt-rest-min, 0); }
+  58.9% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 1); }
+  60.9% { opacity: var(--lt-rest-min, 0); }
+  74.1% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 1); }
+  76.7% { opacity: var(--lt-rest-min, 0); }
+  86.9% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.45); }
+  89.1% { opacity: var(--lt-rest-min, 0); }
+  89.5% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.7); }
+  91.5% { opacity: var(--lt-rest-min, 0); }
+}
+@keyframes lcars-lt-cascade-b3 {
+  0%% { opacity: var(--lt-rest-min, 0); }
+  1.2% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.35); }
+  3.4% { opacity: var(--lt-rest-min, 0); }
+  3.8% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.4); }
+  8.3% { opacity: var(--lt-rest-min, 0); }
+  17.5% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.35); }
+  26.6% { opacity: var(--lt-rest-min, 0); }
+  28.5% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.9); }
+  35.3% { opacity: var(--lt-rest-min, 0); }
+  37.5% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.8); }
+  44.3% { opacity: var(--lt-rest-min, 0); }
+  46.4% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.65); }
+  50.0% { opacity: var(--lt-rest-min, 0); }
+  56.3% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.35); }
+  58.5% { opacity: var(--lt-rest-min, 0); }
+  58.9% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 1); }
+  62.5% { opacity: var(--lt-rest-min, 0); }
+  74.1% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 1); }
+  78.6% { opacity: var(--lt-rest-min, 0); }
+  86.9% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.45); }
+  89.1% { opacity: var(--lt-rest-min, 0); }
+  89.5% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.7); }
+  93.1% { opacity: var(--lt-rest-min, 0); }
+}
+@keyframes lcars-lt-cascade-b4 {
+  0%% { opacity: var(--lt-rest-min, 0); }
+  1.2% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.35); }
+  3.4% { opacity: var(--lt-rest-min, 0); }
+  3.8% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.4); }
+  10.3% { opacity: var(--lt-rest-min, 0); }
+  17.5% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.35); }
+  28.1% { opacity: var(--lt-rest-min, 0); }
+  28.5% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.9); }
+  37.1% { opacity: var(--lt-rest-min, 0); }
+  37.5% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.8); }
+  46.0% { opacity: var(--lt-rest-min, 0); }
+  46.4% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.65); }
+  51.7% { opacity: var(--lt-rest-min, 0); }
+  56.3% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.35); }
+  58.5% { opacity: var(--lt-rest-min, 0); }
+  58.9% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 1); }
+  64.2% { opacity: var(--lt-rest-min, 0); }
+  74.1% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 1); }
+  80.6% { opacity: var(--lt-rest-min, 0); }
+  86.9% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.45); }
+  89.1% { opacity: var(--lt-rest-min, 0); }
+  89.5% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.7); }
+  94.8% { opacity: var(--lt-rest-min, 0); }
+}
+@keyframes lcars-lt-cascade-c2 {
+  0%% { opacity: var(--lt-rest-min, 0); }
+  5.1% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.35); }
+  9.7% { opacity: var(--lt-rest-min, 0); }
+  10.1% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.4); }
+  12.7% { opacity: var(--lt-rest-min, 0); }
+  19.5% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.5); }
+  21.1% { opacity: var(--lt-rest-min, 0); }
+  21.5% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.4); }
+  24.9% { opacity: var(--lt-rest-min, 0); }
+  30.9% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.35); }
+  35.8% { opacity: var(--lt-rest-min, 0); }
+  36.2% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 1); }
+  38.2% { opacity: var(--lt-rest-min, 0); }
+  54.5% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.65); }
+  62.7% { opacity: var(--lt-rest-min, 0); }
+  65.2% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.9); }
+  68.4% { opacity: var(--lt-rest-min, 0); }
+  74.7% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.35); }
+  77.3% { opacity: var(--lt-rest-min, 0); }
+  77.7% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.4); }
+  79.7% { opacity: var(--lt-rest-min, 0); }
+  92.2% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 1); }
+  94.5% { opacity: var(--lt-rest-min, 0); }
+}
+@keyframes lcars-lt-cascade-c3 {
+  0%% { opacity: var(--lt-rest-min, 0); }
+  5.1% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.35); }
+  9.7% { opacity: var(--lt-rest-min, 0); }
+  10.1% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.4); }
+  14.6% { opacity: var(--lt-rest-min, 0); }
+  19.5% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.5); }
+  21.1% { opacity: var(--lt-rest-min, 0); }
+  21.5% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.4); }
+  27.1% { opacity: var(--lt-rest-min, 0); }
+  30.9% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.35); }
+  35.8% { opacity: var(--lt-rest-min, 0); }
+  36.2% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 1); }
+  39.8% { opacity: var(--lt-rest-min, 0); }
+  54.5% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.65); }
+  64.8% { opacity: var(--lt-rest-min, 0); }
+  65.2% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.9); }
+  70.6% { opacity: var(--lt-rest-min, 0); }
+  74.7% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.35); }
+  77.3% { opacity: var(--lt-rest-min, 0); }
+  77.7% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.4); }
+  81.3% { opacity: var(--lt-rest-min, 0); }
+  92.2% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 1); }
+  96.2% { opacity: var(--lt-rest-min, 0); }
+}
+@keyframes lcars-lt-cascade-c4 {
+  0%% { opacity: var(--lt-rest-min, 0); }
+  5.1% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.35); }
+  9.7% { opacity: var(--lt-rest-min, 0); }
+  10.1% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.4); }
+  16.6% { opacity: var(--lt-rest-min, 0); }
+  19.5% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.5); }
+  21.1% { opacity: var(--lt-rest-min, 0); }
+  21.5% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.4); }
+  29.5% { opacity: var(--lt-rest-min, 0); }
+  30.9% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.35); }
+  35.8% { opacity: var(--lt-rest-min, 0); }
+  36.2% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 1); }
+  41.5% { opacity: var(--lt-rest-min, 0); }
+  54.5% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.65); }
+  64.8% { opacity: var(--lt-rest-min, 0); }
+  65.2% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.9); }
+  72.9% { opacity: var(--lt-rest-min, 0); }
+  74.7% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.35); }
+  77.3% { opacity: var(--lt-rest-min, 0); }
+  77.7% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.4); }
+  83.0% { opacity: var(--lt-rest-min, 0); }
+  92.2% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 1); }
+  98.1% { opacity: var(--lt-rest-min, 0); }
+}
+@keyframes lcars-lt-cascade-d2 {
+  0%% { opacity: var(--lt-rest-min, 0); }
+  3.0% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 1); }
+  6.2% { opacity: var(--lt-rest-min, 0); }
+  13.0% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.65); }
+  16.4% { opacity: var(--lt-rest-min, 0); }
+  16.8% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.4); }
+  19.4% { opacity: var(--lt-rest-min, 0); }
+  26.8% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.9); }
+  29.8% { opacity: var(--lt-rest-min, 0); }
+  30.2% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 1); }
+  33.6% { opacity: var(--lt-rest-min, 0); }
+  42.7% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.65); }
+  48.5% { opacity: var(--lt-rest-min, 0); }
+  51.6% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.9); }
+  53.9% { opacity: var(--lt-rest-min, 0); }
+  61.3% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.35); }
+  64.3% { opacity: var(--lt-rest-min, 0); }
+  64.7% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.4); }
+  66.7% { opacity: var(--lt-rest-min, 0); }
+  74.3% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 1); }
+  80.1% { opacity: var(--lt-rest-min, 0); }
+  84.6% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 1); }
+  90.4% { opacity: var(--lt-rest-min, 0); }
+}
+@keyframes lcars-lt-cascade-d3 {
+  0%% { opacity: var(--lt-rest-min, 0); }
+  3.0% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 1); }
+  8.4% { opacity: var(--lt-rest-min, 0); }
+  13.0% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.65); }
+  16.4% { opacity: var(--lt-rest-min, 0); }
+  16.8% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.4); }
+  21.3% { opacity: var(--lt-rest-min, 0); }
+  26.8% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.9); }
+  29.8% { opacity: var(--lt-rest-min, 0); }
+  30.2% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 1); }
+  35.9% { opacity: var(--lt-rest-min, 0); }
+  42.7% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.65); }
+  51.2% { opacity: var(--lt-rest-min, 0); }
+  51.6% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.9); }
+  55.6% { opacity: var(--lt-rest-min, 0); }
+  61.3% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.35); }
+  64.3% { opacity: var(--lt-rest-min, 0); }
+  64.7% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.4); }
+  68.3% { opacity: var(--lt-rest-min, 0); }
+  74.3% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 1); }
+  83.4% { opacity: var(--lt-rest-min, 0); }
+  84.6% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 1); }
+  93.7% { opacity: var(--lt-rest-min, 0); }
+}
+@keyframes lcars-lt-cascade-d4 {
+  0%% { opacity: var(--lt-rest-min, 0); }
+  3.0% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 1); }
+  10.7% { opacity: var(--lt-rest-min, 0); }
+  13.0% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.65); }
+  16.4% { opacity: var(--lt-rest-min, 0); }
+  16.8% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.4); }
+  23.3% { opacity: var(--lt-rest-min, 0); }
+  26.8% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.9); }
+  29.8% { opacity: var(--lt-rest-min, 0); }
+  30.2% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 1); }
+  38.2% { opacity: var(--lt-rest-min, 0); }
+  42.7% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.65); }
+  51.2% { opacity: var(--lt-rest-min, 0); }
+  51.6% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.9); }
+  57.5% { opacity: var(--lt-rest-min, 0); }
+  61.3% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.35); }
+  64.3% { opacity: var(--lt-rest-min, 0); }
+  64.7% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 0.4); }
+  70.0% { opacity: var(--lt-rest-min, 0); }
+  74.3% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 1); }
+  84.2% { opacity: var(--lt-rest-min, 0); }
+  84.6% { opacity: calc(var(--lt-rest-min, 0) + var(--sp) * 1); }
+  97.1% { opacity: var(--lt-rest-min, 0); }
+}
+.lcars-lt:not([data-fx-off~="rest"])[data-mode="rest"]:is([data-beh="constant"], .is-play)[data-rest="cascade"][data-busy="normal"] .lcars-lt-seg.is-rest-on[data-c="0"]::after { animation-name: lcars-lt-cascade-a2; }
+.lcars-lt:not([data-fx-off~="rest"])[data-mode="rest"]:is([data-beh="constant"], .is-play)[data-rest="cascade"][data-busy="normal"] .lcars-lt-seg.is-rest-on[data-c="1"]::after { animation-name: lcars-lt-cascade-b2; }
+.lcars-lt:not([data-fx-off~="rest"])[data-mode="rest"]:is([data-beh="constant"], .is-play)[data-rest="cascade"][data-busy="normal"] .lcars-lt-seg.is-rest-on[data-c="2"]::after { animation-name: lcars-lt-cascade-c2; }
+.lcars-lt:not([data-fx-off~="rest"])[data-mode="rest"]:is([data-beh="constant"], .is-play)[data-rest="cascade"][data-busy="normal"] .lcars-lt-seg.is-rest-on[data-c="3"]::after { animation-name: lcars-lt-cascade-d2; }
+.lcars-lt:not([data-fx-off~="rest"])[data-mode="rest"]:is([data-beh="constant"], .is-play)[data-rest="cascade"][data-busy="busy"] .lcars-lt-seg.is-rest-on[data-c="0"]::after { animation-name: lcars-lt-cascade-a3; }
+.lcars-lt:not([data-fx-off~="rest"])[data-mode="rest"]:is([data-beh="constant"], .is-play)[data-rest="cascade"][data-busy="busy"] .lcars-lt-seg.is-rest-on[data-c="1"]::after { animation-name: lcars-lt-cascade-b3; }
+.lcars-lt:not([data-fx-off~="rest"])[data-mode="rest"]:is([data-beh="constant"], .is-play)[data-rest="cascade"][data-busy="busy"] .lcars-lt-seg.is-rest-on[data-c="2"]::after { animation-name: lcars-lt-cascade-c3; }
+.lcars-lt:not([data-fx-off~="rest"])[data-mode="rest"]:is([data-beh="constant"], .is-play)[data-rest="cascade"][data-busy="busy"] .lcars-lt-seg.is-rest-on[data-c="3"]::after { animation-name: lcars-lt-cascade-d3; }
+.lcars-lt:not([data-fx-off~="rest"])[data-mode="rest"]:is([data-beh="constant"], .is-play)[data-rest="cascade"][data-busy="packed"] .lcars-lt-seg.is-rest-on[data-c="0"]::after { animation-name: lcars-lt-cascade-a4; }
+.lcars-lt:not([data-fx-off~="rest"])[data-mode="rest"]:is([data-beh="constant"], .is-play)[data-rest="cascade"][data-busy="packed"] .lcars-lt-seg.is-rest-on[data-c="1"]::after { animation-name: lcars-lt-cascade-b4; }
+.lcars-lt:not([data-fx-off~="rest"])[data-mode="rest"]:is([data-beh="constant"], .is-play)[data-rest="cascade"][data-busy="packed"] .lcars-lt-seg.is-rest-on[data-c="2"]::after { animation-name: lcars-lt-cascade-c4; }
+.lcars-lt:not([data-fx-off~="rest"])[data-mode="rest"]:is([data-beh="constant"], .is-play)[data-rest="cascade"][data-busy="packed"] .lcars-lt-seg.is-rest-on[data-c="3"]::after { animation-name: lcars-lt-cascade-d4; }
+
+/* Overclocked: the Packed schedule at 2.2 times the speed. */
+.lcars-lt:not([data-fx-off~="rest"])[data-mode="rest"]:is([data-beh="constant"], .is-play)[data-rest="cascade"][data-busy="overclocked"] .lcars-lt-seg.is-rest-on[data-c="0"]::after { animation-name: lcars-lt-cascade-a4; animation-duration: calc((16s + var(--r, 0.5) * 28s) / ((var(--lt-rest-speed, 1) * var(--lt-cal, 1)) * 2.2)); }
+.lcars-lt:not([data-fx-off~="rest"])[data-mode="rest"]:is([data-beh="constant"], .is-play)[data-rest="cascade"][data-busy="overclocked"] .lcars-lt-seg.is-rest-on[data-c="1"]::after { animation-name: lcars-lt-cascade-b4; animation-duration: calc((16s + var(--r, 0.5) * 28s) / ((var(--lt-rest-speed, 1) * var(--lt-cal, 1)) * 2.2)); }
+.lcars-lt:not([data-fx-off~="rest"])[data-mode="rest"]:is([data-beh="constant"], .is-play)[data-rest="cascade"][data-busy="overclocked"] .lcars-lt-seg.is-rest-on[data-c="2"]::after { animation-name: lcars-lt-cascade-c4; animation-duration: calc((16s + var(--r, 0.5) * 28s) / ((var(--lt-rest-speed, 1) * var(--lt-cal, 1)) * 2.2)); }
+.lcars-lt:not([data-fx-off~="rest"])[data-mode="rest"]:is([data-beh="constant"], .is-play)[data-rest="cascade"][data-busy="overclocked"] .lcars-lt-seg.is-rest-on[data-c="3"]::after { animation-name: lcars-lt-cascade-d4; animation-duration: calc((16s + var(--r, 0.5) * 28s) / ((var(--lt-rest-speed, 1) * var(--lt-cal, 1)) * 2.2)); }
+
+/* Warp core presets are drawn as rounded segments, whatever the Caps setting says. */
+.lcars-lt[data-mode="rest"]:is([data-rest="warp"], [data-rest="pulses"], [data-rest="wide"]):not([data-shape="B"]) :is(.lcars-lt-seg, .lcars-lt-seg::after, .lcars-lt-seg::before) { border-radius: 999px !important; }
+
+/* Rows: Height "Two lines of text" splits two lines of the ticker label between the rows. */
+.lcars-lt[data-rowh="fixed"][style*="--lt-rows"] { --lt-h: max(2px, calc((2em * var(--lt-label-size, 1) - 3px * (var(--lt-rows) - 1)) / var(--lt-rows))); }
+
+/* Ripple (Data cascade): up to three rings, set by the plugin for about a second after a click.
+   Each segment works out its distance to each ring's origin. Under the ring, a flicker peaks up to
+   about three times higher (--sp, in the cascade rule), and a faint layer of the segment's own color
+   keeps the ring visible where nothing is flickering. */
+.lcars-lt[data-ripple] .lcars-lt-seg {
+  --rd1: hypot(var(--i, 0) - var(--r1x, 0), (var(--row, 0) - var(--r1y, 0)) * var(--lt-aspect, 1));
+  --rd2: hypot(var(--i, 0) - var(--r2x, 0), (var(--row, 0) - var(--r2y, 0)) * var(--lt-aspect, 1));
+  --rd3: hypot(var(--i, 0) - var(--r3x, 0), (var(--row, 0) - var(--r3y, 0)) * var(--lt-aspect, 1));
+  --rf: max(
+    var(--r1a, 0) * clamp(0, 1 - abs(var(--rd1) - var(--r1r, 0)) / 1.6, 1),
+    var(--r2a, 0) * clamp(0, 1 - abs(var(--rd2) - var(--r2r, 0)) / 1.6, 1),
+    var(--r3a, 0) * clamp(0, 1 - abs(var(--rd3) - var(--r3r, 0)) / 1.6, 1));
+}
+.lcars-lt[data-ripple][data-rest="cascade"][data-mode="rest"] .lcars-lt-seg::before {
+  content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none; border-radius: inherit;
+  background: color-mix(in srgb, var(--lt-rest2, #ff977b) calc(var(--rm, 0) * 100%), var(--lt-rest, #41c4f7));
+  opacity: calc(var(--rf) * 0.4);
+}
+
+/* Data cascade flow: every segment on a line shares one run of flicker (data-c), at one fixed
+   period, started later the farther it is along the flow (--pos). --ph is the line's own offset. */
+.lcars-lt:not([data-fx-off~="rest"])[data-mode="rest"]:is([data-beh="constant"], .is-play)[data-rest="cascade"][data-flow] .lcars-lt-seg.is-rest-on:not(.is-free)::after {
+  animation-duration: calc(24s / (var(--lt-rest-speed, 1) * var(--lt-cal, 1))) !important;
+  animation-delay: calc((var(--ph, 0) * -24s + var(--pos, 0) * 0.12s) / (var(--lt-rest-speed, 1) * var(--lt-cal, 1))) !important;
+}
+
+/* Calendar progress: the lit part is the state's own look; the unlit part is that look, dimmed. */
+.lcars-lt-seg { transition: opacity 0.5s ease; }
+.lcars-lt-seg.is-unlit { opacity: var(--lt-unlit, 0.25); }
+/* Final minutes, color shift: the lights take the final color (the rest colors change, so any style follows). */
+.lcars-lt.is-final[data-final="color"][data-cal] { --lt-rest: var(--lt-final, #e7442a) !important; --lt-rest2: var(--lt-final, #e7442a) !important; --lt-bar-g0: var(--lt-final, #e7442a) !important; --lt-bar-g1: var(--lt-final, #e7442a) !important; }
+body:is(.lcars-motion-off, .lcars-plugin-motion-off) .lcars-lt-seg { transition: none; }
+
+/* Event bar situations inside a status card: small expanders. */
+.lcars-set-sub { border-left: 2px solid var(--background-modifier-border); margin: 0.3em 0 0.3em 0.2em; padding: 0 0 0 0.8em; }
+.lcars-set-sub > summary { cursor: pointer; padding: 0.35em 0; font-weight: var(--font-semibold); color: var(--text-muted); }
+.lcars-set-sub[open] > summary { color: var(--text-normal); }
+
+/* Why the lights look as they do. */
+.lcars-why { font-size: var(--font-ui-smaller); color: var(--text-muted); margin: 0.4em 0 0.8em; line-height: 1.5; }
+.lcars-why b { color: var(--text-normal); font-weight: var(--font-semibold); }
+.lcars-why-from { opacity: 0.85; }
+
+.lcars-look-holder { margin: 0.4em 0 0.8em; padding-left: 0.8em; border-left: 2px solid var(--background-modifier-border); }

@@ -1,0 +1,238 @@
+/* ============================================================
+   LCARS — Notebook Navigator row styling (Colorful Folders companion)
+   Canon: Picard LCARS Style Guide — square corners, no borders
+   except on selection, buttons spaced apart, blue→gray heat ramp.
+   ------------------------------------------------------------
+   CSS CASCADE WARNING (read before editing any rule here):
+   1. Colorful Folders injects ALL NN rules via document.adoptedStyleSheets
+      (NOT a <style> tag). Adopted stylesheets cascade AFTER every user
+      snippet, so any rule of ours with equal-or-lower specificity loses.
+      CF's NN selectors top out at (0,4,1):
+        body .notebook-navigator .nn-navitem[data-path="..."]:not(.nn-header)
+   2. CF's NN_SELECTORS.CONTAINERS is an OR-list of ALTERNATIVE scopes
+      (.notebook-navigator, .nn-navigation-pane-content, .nn-list-view,
+      .nn-explorer-content) used to FIND containers — it is NOT an
+      ancestor chain. Observed NN DOM (2026-09-23) is:
+        .nn-virtual-nav-item > .nn-navitem.nn-folder[data-path]  (no pane-content)
+      The ONLY reliable scope is:  .notebook-navigator  →  .nn-navitem[data-path]
+   3. Every override below therefore uses .notebook-navigator +
+      [data-path] + :not(.nn-header) to reach ≥(0,5,1). The 2px CF
+      margins beat us for weeks because our old selectors demanded a
+      phantom .nn-navigation-pane-content ancestor and NEVER matched.
+   ------------------------------------------------------------
+   1. Restores nested indentation that Colorful Folders' NN rules
+      flatten (its nnBase rule forces padding-left: 4px !important
+      on every row, killing the var(--level) * indent calc).
+    1b. Shrinks NN's 8px horizontal content padding to 4px so every
+       box's content sits closer to its left edge.
+    4. Square corners EVERYWHERE, including NN's own fill pseudo-
+       elements (hover pill, context-menu outline, custom backgrounds)
+       — those used min(14px) radius vars, which is why the hover box
+       used to round differently than the row.
+    5. Selected state (currently commented out — see note there).
+    ============================================================ */
+
+/* ------------------------------------------------------------
+   NEEDS
+     - Notebook Navigator, and LCARS Core for --lcars-row-bg and the fade timing variables.
+     - Colorful Folders for the heat colors the row styling sits on.
+   WITHOUT IT
+     - Without Notebook Navigator: no effect at all; every selector is scoped to .notebook-navigator.
+     - Without Colorful Folders: rows are drawn in the row background only, with no heat colors.
+   TOGGLE   Settings > Appearance > CSS snippets > "lcars-nn-rows".
+   RELEASE  v0.2 (leaves with Notebook Navigator)
+   ------------------------------------------------------------ */
+
+/* 1. Nested indentation — text steps in per level, colored box stays
+      full-width (NN-native look). CF flattens NN's indent by forcing
+      padding-left: 4px !important, so re-apply the level calc here.
+      NOTE: the Explorer-style inset-fill experiment (margin-inline-start
+      on the row) was reverted 2026-09-23 — the author kept full-width fills,
+      text-only indentation. The +2px is the small base step (was +4px,
+      trimmed 2026-09-23) and CF's margin-left: 2px !important is
+      zeroed so the box hugs the pane edge with no gutter. */
+/* 2026-10-01: specificity raised. With Colorful Folders' NN fills on, its
+   per-folder rules (adopted stylesheet, later in the cascade) beat the old
+   selector and flattened subfolders again. Doubled classes outrank them. */
+html:root:root body .notebook-navigator.notebook-navigator :is(.nn-navitem, .nn-shortcut-item):is(.nn-navitem, .nn-shortcut-item)[data-path][data-path]:not(.nn-header) {
+  margin-inline-start: 0 !important;
+  margin-left: 0 !important;
+  padding-inline-start: calc(var(--level, 0) * var(--nn-setting-nav-indent, 16px) + 2px) !important;
+  padding-left: calc(var(--level, 0) * var(--nn-setting-nav-indent, 16px) + 2px) !important;
+}
+
+/* 1b. NN gives .nn-navitem-content its own 8px horizontal padding
+      (--nn-nav-item-padding-horizontal). The level indent lives on the
+      row's padding (rule 1), so trimming this reduces the left inset
+      of EVERY box equally. 4px keeps a small breathing room before
+      the folder/file icon. */
+:root body .notebook-navigator :is(.nn-navitem, .nn-shortcut-item)[data-path]:not(.nn-header) > .nn-navitem-content {
+  padding-inline-start: 4px !important;
+  padding-left: 4px !important;
+}
+
+/* 2. Vault-name / root folder row — LCARS bright-blue command bar */
+/*:root body .notebook-navigator .nn-navitem.nn-folder[data-path="/"] {
+  background-color: #41c4f7 !important;
+  border-radius: 0 !important;
+}
+:root body .notebook-navigator .nn-navitem.nn-folder[data-path="/"] .nn-navitem-name {
+  color: #1c3c55 !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.08em !important;
+}
+:root body .notebook-navigator .nn-navitem.nn-folder[data-path="/"] .nn-navitem-icon {
+  color: #1c3c55 !important;
+}
+
+/* 3. Tag rows — ghost-gray LCARS tint (square, quiet chrome) */
+/*:root body .notebook-navigator .nn-navitem.nn-tag:not(.nn-header) {
+  background-color: rgba(210, 213, 223, 0.16) !important;
+  border-radius: 0 !important;
+}
+:root body .notebook-navigator .nn-navitem.nn-tag:not(.nn-header) .nn-navitem-name {
+  color: #d2d5df !important;
+}
+
+/* 3b. Property rows — primary-gray LCARS tint */
+/*:root body .notebook-navigator .nn-navitem.nn-property:not(.nn-header) {
+  background-color: rgba(109, 116, 140, 0.2) !important;
+  border-radius: 0 !important;
+}
+:root body .notebook-navigator .nn-navitem.nn-property:not(.nn-header) .nn-navitem-name {
+  color: #9ea5ba !important;
+}
+
+/* 4. Square corners — LCARS chrome tolerates no radii.
+      CF paints the row fill at border-radius: 6px !important (0,4,1);
+      this rule overrides the row at (0,5,1). NN additionally paints a
+      hover pill and a context-menu outline on .nn-navitem::after using
+      four corner custom props that DEFAULT to min(14px, ...) — that
+      made the hover box round far more than the row. Zeroing those
+      props (they inherit into the pseudo-element) plus explicit
+      border-radius: 0 on ::after/::before and .nn-navitem-content
+      makes every fill the same square.
+      ROW SPACING: NOT settable via CSS on NN rows — NN virtualizes the
+      tree: every row sits on a fixed-height grid (.nn-navitem height =
+      var(--nn-setting-nav-item-height)) and is moved with transform:
+      translateY(index * rowHeight), so margins compute in the inspector
+      but are never painted. Use NN settings → "Root item spacing"
+      (rootLevelSpacing, 0-12px, currently 0) instead. */
+:root body .notebook-navigator .nn-navitem[data-path]:not(.nn-header) {
+  border-radius: 0 !important;
+  --nn-navitem-top-left-radius: 0px;
+  --nn-navitem-top-right-radius: 0px;
+  --nn-navitem-bottom-left-radius: 0px;
+  --nn-navitem-bottom-right-radius: 0px;
+}
+:root body .notebook-navigator .nn-navitem[data-path]:not(.nn-header)::after,
+:root body .notebook-navigator .nn-navitem[data-path]:not(.nn-header)::before {
+  border-radius: 0 !important;
+}
+:root body .notebook-navigator .nn-navitem[data-path]:not(.nn-header) > .nn-navitem-content {
+  border-radius: 0 !important;
+}
+
+/* 5. Selected state — black LCARS panel.
+      NOTE on auto-heatmap folders: CF colors the fill via rgba()
+      with no CSS variable, so pure CSS can't read the folder's own
+      hue to tint the selected text. Manual-pinned folders (guide
+      hex chosen in the CF context menu) DO get their exact hue as
+      the text + outline; auto folders and the vault bar fall back
+      to the LCARS bright-blue chrome outline, which is the LCARS-
+      appropriate choice. If you want the selected outline to match
+      a specific folder exactly, pin it with a manual color. */
+/*:root body .notebook-navigator .nn-navitem.nn-selected:not(.nn-header) {
+  background-color: var(--lcars-black, #000000) !important;
+  border-radius: 0 !important;
+}
+:root body .notebook-navigator .nn-navitem.nn-selected:not(.nn-header) .nn-navitem-name {
+  color: #f3f4f7 !important;
+  font-weight: 700 !important;
+}
+:root body .notebook-navigator .nn-navitem.nn-selected:not(.nn-header) .nn-navitem-icon {
+  color: #41c4f7 !important;
+}
+:root body .notebook-navigator .nn-navitem.nn-selected:not(.nn-header) {
+  outline: 2px solid #41c4f7 !important;
+  outline-offset: -1px !important;
+}
+*/
+/* 6. (REMOVED 2026-10-01) Active/selected item styling.
+       Was a hardcoded black panel + bright-blue border, fighting
+       Notebook Navigator's own ::after selected-background layer.
+       The author set this natively instead: Style Manager → Notebook
+       Navigator → nn-theme-navitem-selected-bg /
+       -selected-inactive-bg (black) and -selected-border-color /
+       -selected-inactive-border-color (blue). NN owns this layer
+       directly, so no snippet override is needed or should be
+       re-added here — it would only re-create the same conflict. */
+
+/* 7. Default row background (2026-10-01).
+      Every NN row gets the palette's "Sidebar row background" fill
+      (Style Manager → LCARS Palette, #1E2229 in Standard). No
+      !important: Colorful Folders' heat fills and NN's selected-row
+      layer use !important / ::after, so they still paint over this. */
+html:root body .notebook-navigator.notebook-navigator :is(.nn-navitem, .nn-file, .nn-shortcut-item):not(.nn-header):not(.nn-selected) {
+  background-color: var(--lcars-row-bg, transparent);
+}
+
+/* 8. Hover → one step brighter (2026-10-01).
+      filter: brightness() scales the row's own color up while
+      keeping it saturated. A white overlay was ruled out: it lifts
+      all channels equally and washes blues to gray. Works on any
+      color, so heat fills and Red Alert brighten too. NN's own hover
+      background is cleared so only the lift shows.
+       2026-10-03: the 120ms/linear is now read from lcars-frame.css
+      §0 so this row, the colored ground under it, both tab rows and
+      the ribbon all run one clock.
+
+      2026-10-03: brightness went 1.5 → 1.18 → 1.3. Recorded here
+      because the middle value was wrong twice, in both directions,
+      and the reason is worth not repeating.
+
+      1.5 was described in an older comment as "two palette steps"
+      when two honest steps is ×1.18 (#37A6D1 → #41C4F7 exactly).
+      1.5 overshot to #52F9FF. Then 1.18 was correct and the author found
+      the row had gone slack against the rail, so it is 1.3 now.
+
+      The clipping worry was half-right, and that is the useful part.
+      Multiplying clips whatever is already near 255, and it always
+      did. At 1.18 that was bright-blue and the two lighter orange-
+      reds; at 1.3 blue joins them. But starlight and ghost-gray clip
+      at BOTH values, because they were already at the top of their
+      channel before any multiplier ran. So "clipping" was never the
+      thing that made 1.5 feel wrong — 1.5 was wrong because it jumped
+      two to four luminance steps depending on which folder you
+      pointed at, so the lift's size varied per row. 1.18 fixed that
+      variance and cost some of the kick. 1.3 keeps the even step and
+      puts the kick back. Measured:
+        #1C3C55 → #244E6E   (dark-blue,        lum ×1.50)
+        #2A7193 → #3793BF   (medium-dark-blue, lum ×1.67)
+        #52596E → #6B748F   (medium-dark-gray, lum ×1.62)
+        #37A6D1 → #48D8FF   (blue, blue channel clips)
+      Still a stronger lift than the ribbon's 1.15 on purpose. The
+      ribbon is answering "is this already on"; the row is answering
+      "which of forty rows is this." Different question, so different
+      strength — but one clock, and one honest ratio. */
+/* 2026-10-03, the author asked whether the fade reaches borders. On NN rows
+   it already does, and not by accident: NN draws its hover border as
+   an inset box-shadow on ::after (--nn-theme-navitem-border-width,
+   --nn-theme-navitem-hover-border-color), which is why the FILENAME
+   list below transitions box-shadow even though no rule here sets
+   one. Also carried here so the row and its own ::after share a clock
+   if that hover ring is ever given a visible width. */
+html:root body .notebook-navigator.notebook-navigator :is(.nn-navitem, .nn-file, .nn-shortcut-item):not(.nn-header) {
+  --nn-theme-navitem-hover-bg: transparent;
+  transition:
+    filter var(--lcars-fade-dur, 120ms) var(--lcars-fade-ease, linear),
+    box-shadow var(--lcars-fade-dur, 120ms) var(--lcars-fade-ease, linear);
+}
+/* !important + doubled classes: Colorful Folders adds its own
+   hover rule on every colored folder (brightness(1.03) !important),
+   which silently beat this one. Ignored folders had no CF rule,
+   which is why only they lifted. */
+html:root:root body .notebook-navigator.notebook-navigator :is(.nn-navitem, .nn-file, .nn-shortcut-item):is(.nn-navitem, .nn-file, .nn-shortcut-item)[data-path]:not(.nn-header):hover {
+  filter: brightness(1.3) !important;   /* 2026-10-03, per the author: even luminance step with the kick back. Was 1.5, then 1.18. See §8. */
+}

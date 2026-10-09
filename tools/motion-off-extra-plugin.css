@@ -1,0 +1,5 @@
+/* The status text effects are written into a style tag at run time (see
+   condCss in main.js), so they cannot be found here. This covers them. */
+body:is(.lcars-motion-off, .lcars-plugin-motion-off) .lcars-bh-cond .lcars-bh-condtext {
+  animation: none !important;
+}
