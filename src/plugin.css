@@ -1,4 +1,4 @@
-/* LCARS Companion — bridge banner.
+/* LCARS for Obsidian — bridge banner.
    Rows sit 4px apart and stay tight. The plugin pads the whole banner
    to a whole number of ribbon grid rows (--lcars-bh-pitch), so any
    spare space is at the bottom and the rows below stay on the grid. */
@@ -407,7 +407,7 @@ body.lcars-idle .lcars-lt:not([data-fx-off~="idleDim"]) { opacity: 0.5; }
 .vertical-tab-content:has(.lcars-set-sec), .lcars-set-sec, .lcars-set-body, .lcars-set-preview { overflow-anchor: none; }
 .vertical-tab-content:has(.lcars-set-sec) { padding-bottom: 12em; }
 
-/* Settings tabs (the Companion page). The tab bar and the lights preview
+/* Settings tabs (the plugin page). The tab bar and the lights preview
    stay pinned while the settings scroll under them. */
 .lcars-set-page { overflow-anchor: none; padding-bottom: 6em; }
 .lcars-set-page > .lcars-set-preview { overflow-anchor: none; }

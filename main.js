@@ -1,5 +1,5 @@
-/* LCARS Companion.
-   Companion plugin for the LCARS theme.
+/* LCARS for Obsidian.
+   The plugin for the LCARS theme.
 
    - Banner: built from settings, mounted at the top of Notebook
      Navigator and of the core File Explorer.
@@ -8,10 +8,10 @@
    - Stardate, clock, condition toggle, standby, activity registry, and
      the five subsystem channels all run on ONE set of timers and paint
      every mounted banner copy.
-   The theme's snippets style the banner too; this plugin keeps the class
+   The theme styles the banner too; this plugin keeps the class
    names they use, and every theme variable it reads has a fallback.
 
-   Extension hooks (this.hooks, exposed as window.lcarsCompanion.hooks): a
+   Extension hooks (this.hooks, exposed as window.lcarsObsidian.hooks): a
    second plugin can supply the lights model, the lights label, click
    behaviour and extra bar colors. With no hooks the lights run the resting
    patterns and the banner works on its own.
@@ -29,8 +29,8 @@
    Statuses raised by hand (this.raised): raise(id, { source, until }),
    clear(id, { source, force }), toggle(id, opts). Each status has hand (can
    be raised by hand) and exit ({ mode, minutes, at }). Every change fires
-   "lcars-companion-status-changed" on window with { id, change, source }.
-   Also window.lcarsCompanion.api.statuses { list, active, raise, clear },
+   "lcars-obsidian-status-changed" on window with { id, change, source }.
+   Also window.lcarsObsidian.api.statuses { list, active, raise, clear },
    experimental until 1.0, and the link obsidian://lcars-status?raise=ID,
    clear=ID or toggle=ID, with until=MINUTES and force=1. */
 "use strict";
@@ -1109,7 +1109,7 @@ function startRibbonRoles(plugin) {
   };
 }
 
-class LcarsCompanion extends obsidian.Plugin {
+class LcarsObsidian extends obsidian.Plugin {
   async onload() {
     this.settings = Object.assign({}, DEFAULTS, await this.loadData());
     this.settings.channels = Object.assign({}, DEFAULTS.channels, this.settings.channels);
@@ -1141,7 +1141,7 @@ class LcarsCompanion extends obsidian.Plugin {
     this.claims = new Set();
     this.taskCounts = new Map();
     this.taskTotal = 0;
-    this.addSettingTab(new CompanionSettings(this.app, this));
+    this.addSettingTab(new LcarsSettings(this.app, this));
     var me = this;
     // One command per status that can be raised by hand. Red and gray keep
     // their first ids, so existing hotkeys still work. A status added later
@@ -1173,7 +1173,7 @@ class LcarsCompanion extends obsidian.Plugin {
       // rescans when the page's CSS changes, so tell it once that ours has loaded.
       window.setTimeout(function () { self.app.workspace.trigger("css-change"); }, 1200);
       self.mountAll();
-      // The banner's size depends on the theme snippet (row height, top
+      // The banner's size depends on the theme (row height, top
       // mode), fonts, and the ribbon, and all of those can land after the
       // first fit. Refit when each one arrives, in one frame, not per event.
       var refit = function () {
@@ -1280,9 +1280,9 @@ class LcarsCompanion extends obsidian.Plugin {
     if (this._smHead) this._smHead.disconnect();
     window.clearTimeout(this._smTimer);
     if (window.lcarsActivity && window.lcarsActivity._owner === this) delete window.lcarsActivity;
-    if (window.lcarsCompanion && window.lcarsCompanion.plugin === this) {
-      delete window.lcarsCompanion; delete window.lcarsStardate; delete window.lcarsStardateString;
-      window.dispatchEvent(new Event("lcars-companion-gone"));
+    if (window.lcarsObsidian && window.lcarsObsidian.plugin === this) {
+      delete window.lcarsObsidian; delete window.lcarsStardate; delete window.lcarsStardateString;
+      window.dispatchEvent(new Event("lcars-obsidian-gone"));
     }
   }
 
@@ -1515,7 +1515,7 @@ class LcarsCompanion extends obsidian.Plugin {
     var rows = host.createDiv({ cls: "lcars-bh-rows" });
 
     // Always shown, read from manifest.json so it follows each release, and a link to the repo.
-    // Anyone who wants it gone can hide .lcars-bh-version in a CSS snippet.
+    // Anyone who wants it gone can hide .lcars-bh-version with your own CSS.
     rows.createDiv({ cls: "lcars-bh-row lcars-bh-version" }).createEl("a", {
       cls: "lcars-bh-version-link", text: "LCARS v" + this.manifest.version,
       attr: { href: REPO_URL, target: "_blank", rel: "noopener" },
@@ -2496,7 +2496,7 @@ class LcarsCompanion extends obsidian.Plugin {
   changed(id, change, source) {
     this.lt = null; this._condFor = null;
     this.paintAll();
-    if (typeof CustomEvent === "function") window.dispatchEvent(new CustomEvent("lcars-companion-status-changed", { detail: { id: id, change: change, source: source } }));
+    if (typeof CustomEvent === "function") window.dispatchEvent(new CustomEvent("lcars-obsidian-status-changed", { detail: { id: id, change: change, source: source } }));
   }
 
   // The small menu on the word CONDITION: pick one state to raise by hand. The
@@ -2783,8 +2783,8 @@ class LcarsCompanion extends obsidian.Plugin {
       raise: function (id, o) { return me.raise(id, Object.assign({ source: "api" }, o)); },
       clear: function (id, o) { return me.clear(id, Object.assign({ source: "api" }, o)); },
     } };
-    window.lcarsCompanion = { apiVersion: 1, plugin: this, hooks: this.hooks, api: api };
-    window.dispatchEvent(new Event("lcars-companion-ready"));
+    window.lcarsObsidian = { apiVersion: 1, plugin: this, hooks: this.hooks, api: api };
+    window.dispatchEvent(new Event("lcars-obsidian-ready"));
     window.lcarsStardate = function (when) { return stardate(Number(self.settings.stardateYear) || 2401, when); };
     window.lcarsStardateString = function () { return self.stardateString(new Date()); };
   }
@@ -2802,7 +2802,7 @@ class ConfirmModal extends obsidian.Modal {
   }
   onClose() { this.contentEl.empty(); }
 }
-class CompanionSettings extends obsidian.PluginSettingTab {
+class LcarsSettings extends obsidian.PluginSettingTab {
   constructor(app, plugin) { super(app, plugin); this.plugin = plugin; }
 
   // Redraws (settings that show or hide others) keep the scroll spot.
@@ -3140,7 +3140,7 @@ class CompanionSettings extends obsidian.PluginSettingTab {
       if (dh) dh.call(p, root, { plugin: p, save: function () { return p.save(); }, redraw: function () { self.display(); }, smOff: smOff });
     } catch (e) { new obsidian.Setting(root).setName("A debug switch could not load").setDesc(String(e && e.message || e)); }
 
-    this.group("Interface", "Pieces of the LCARS look that need a script. The theme snippet draws them; these switches decide whether the plugin runs the script.");
+    this.group("Interface", "Pieces of the LCARS look that need a script. The theme draws them; these switches decide whether the plugin runs the script.");
     [["titleBlocks", "Note title blocks", "Draw the block and stripe beside each note's title."],
      ["ribbonRoles", "Ribbon roles", "Color each left-ribbon button by where its pane opens: red right sidebar, blue editor, gray left sidebar. The plugin learns each button the first time you press it."]
     ].forEach(function (r) {
@@ -3705,4 +3705,4 @@ class CompanionSettings extends obsidian.PluginSettingTab {
 
 }
 
-module.exports = LcarsCompanion;
+module.exports = LcarsObsidian;

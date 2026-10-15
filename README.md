@@ -2,10 +2,10 @@
 
 A Picard-era LCARS look for [Obsidian](https://obsidian.md), installed as one plugin, **LCARS for Obsidian**. It brings two things:
 
-- **The theme**: the LCARS frame, palette, motion, ribbon and sidebar rows, built into the plugin's stylesheet. There are no snippets to copy or switch on.
+- **The theme**: the LCARS frame, palette, motion, ribbon and sidebar rows, built into the plugin's stylesheet. There is nothing to copy or switch on.
 - **The plugin features**: a ship's bridge banner at the top of your sidebar, and a row of **running lights** under it that can show status, time and activity.
 
-> Desktop only. Needs Obsidian 1.13.0 or newer. **Dark mode only: light mode is not supported yet.** Version 0.1.0.
+> Desktop only. Needs Obsidian 1.13.0 or newer. **Dark mode only: light mode is not supported yet.** Version 0.2.0.
 
 LCARS was designed by Michael Okuda. This is an unofficial fan work; see [CREDITS.md](CREDITS.md).
 
@@ -30,8 +30,8 @@ The settings pages: Statuses, and Running lights.
 | Path | What it is |
 | --- | --- |
 | `main.js`, `manifest.json`, `styles.css` | the LCARS for Obsidian plugin (these three files are what a release ships). `styles.css` holds the theme as well as the plugin's own styles |
-| `src/plugin.css` | the plugin's own styles (banner, lights, settings page). `styles.css` is built from this and `snippets/` |
-| `snippets/` | the theme sources: `lcars-core.css` (palette, frame, stardate, title blocks), `lcars-motion.css` (every animation), `lcars-nn-rows.css` (Notebook Navigator rows), `lcars-folder-focus.css` |
+| `src/plugin.css` | the plugin's own styles (banner, lights, settings page). `styles.css` is built from this and `theme/` |
+| `theme/` | the theme sources: `lcars-core.css` (palette, frame, stardate, title blocks), `lcars-motion.css` (every animation), `lcars-nn-rows.css` (Notebook Navigator rows), `lcars-folder-focus.css` |
 | `fonts/` | the Antonio font and its license (the font is also built into `lcars-core`) |
 | `docs/` | the style guide with its palette swatches, and the extension interface for other plugins |
 | `tools/` | helper scripts for maintaining the repository |
@@ -60,11 +60,11 @@ The plugin works on its own: the theme is part of it, and every theme variable t
 
 *Recommended*
 - **The Minimal theme.** The frame was built on Minimal's variables, and Minimal is the tested base. It is no longer required: `lcars-core` sets the palette and Obsidian's own colors itself, so with Obsidian's default theme the colors match. Only Obsidian's default theme has been tried besides Minimal, and Minimal's spacing and type refinements are not part of the look without it.
-- **Style Manager** (plugin). It gives you the LCARS Palette pickers and the toggles. Without it the dark palette defaults in `lcars-core` still apply and only the pickers are lost.
+- **Style Manager** (plugin, optional). It gives you the LCARS Palette pickers and the toggles. Without it the dark palette defaults in `lcars-core` still apply and only the pickers are lost.
 - **LCARS for Obsidian** (this plugin). Without it the frame is still: no banner, stardate, condition, lights or standby dimming.
 
 *Fonts*
-- **Antonio** (SIL Open Font License) is built into `lcars-core`, so there is nothing to install. The plugin's own banner uses it when the `lcars-core` snippet is on. On a Mac, **Helvetica Neue Condensed** is used for small labels when it is installed (Antonio otherwise). The font file and its license are in `fonts/Antonio/`.
+- **Antonio** (SIL Open Font License) is built into `lcars-core`, so there is nothing to install. The plugin's own banner uses it. On a Mac, **Helvetica Neue Condensed** is used for small labels when it is installed (Antonio otherwise). The font file and its license are in `fonts/Antonio/`.
 
 *Optional*
 - **Notebook Navigator** (plugin). Gives the sidebar its row treatment. Without it the core File Explorer gets the treatment instead, though the row spacing there is not verified.
@@ -74,8 +74,8 @@ The plugin works on its own: the theme is part of it, and every theme variable t
 *Run by the plugin*
 - The ribbon roles and the note title blocks are drawn by the LCARS for Obsidian plugin (Settings, LCARS for Obsidian, General, Interface). With the plugin off, or those switches off, the ribbon stays one neutral column and the title blocks are not drawn.
 
-Which snippet needs what:
-- `lcars-core`: nothing required (Minimal and Style Manager recommended).
+Which part of the theme needs what:
+- `lcars-core`: nothing required (Minimal recommended; Style Manager optional).
 - `lcars-motion`: `lcars-core`.
 - `lcars-nn-rows`: `lcars-core`, Notebook Navigator, Colorful Folders. With no Notebook Navigator it does nothing.
 - `lcars-folder-focus`: `lcars-core`, Notebook Navigator, Colorful Folders 5.0.7 or newer (for the folder text colors). With no Notebook Navigator it does nothing.
@@ -96,11 +96,9 @@ Which snippet needs what:
 
 **From the community plugins list** (once it is accepted): Settings, Community plugins, Browse, search for "LCARS for Obsidian".
 
-**By hand:** download `main.js`, `manifest.json` and `styles.css` from the latest release, put them in `<your vault>/.obsidian/plugins/lcars-companion/`, and turn the plugin on under Community plugins.
+**By hand:** download `main.js`, `manifest.json` and `styles.css` from the latest release, put them in `<your vault>/.obsidian/plugins/lcars-obsidian/`, and turn the plugin on under Community plugins.
 
-**The theme comes with the plugin.** There are no snippets to copy or switch on: installing the plugin installs the theme (the frame, palette, motion, sidebar rows and font). Choose Minimal under Settings, Appearance (recommended), turn on dark mode, and turn Readable line length off (see Requirements).
-
-**The theme without the plugin (optional):** copy the four files from `snippets/` into `<your vault>/.obsidian/snippets/` and switch them on under CSS snippets: `lcars-core` first, then `lcars-motion`, `lcars-nn-rows` and `lcars-folder-focus`. Do not use these together with the plugin: it already contains them, and they would load twice. The banner, the lights, the ribbon roles and the title blocks need the plugin.
+**The theme comes with the plugin.** Installing the plugin installs the theme (the frame, palette, motion, sidebar rows and font). Choose Minimal under Settings, Appearance (recommended), turn on dark mode, and turn Readable line length off (see Requirements).
 
 ## Quick start
 
@@ -156,15 +154,15 @@ obsidian://lcars-status?toggle=red
 
 `force=1` clears a status that something else raised. The id is shown on the status's card (General, Id). The built-in ones are `red`, `gray`, `blue`, `yellow` and `green`.
 
-**For other plugins:** `window.lcarsCompanion` offers a small, **experimental** extension interface. See [docs/companion-contract.md](docs/companion-contract.md).
+**For other plugins:** `window.lcarsObsidian` offers a small, **experimental** extension interface. See [docs/extension-contract.md](docs/extension-contract.md).
 
-## Theme settings (Style Manager)
+## Optional: Style Manager
 
-With the Style Manager plugin, **LCARS Palette** in Style Manager has pickers and sliders for the frame, ribbon and tab colors, folder text (weight, case, brightness), the sidebar row spacing, the banner (drop and padding), motion (including an **All motion off** switch and the active folder's pulse) and more. Without Style Manager every one of them keeps its default. The dark palette for Minimal's own colors is built into `lcars-core`, so Style Manager is not needed to get the LCARS look.
+Style Manager is optional. With the Style Manager plugin, **LCARS Palette** in Style Manager has pickers and sliders for the frame, ribbon and tab colors, folder text (weight, case, brightness), the sidebar row spacing, the banner (drop and padding), motion (including an **All motion off** switch and the active folder's pulse) and more. Without Style Manager every one of them keeps its default. The dark palette for Minimal's own colors is built into `lcars-core`, so Style Manager is not needed to get the LCARS look.
 
 ## Styling
 
-The banner and lights use CSS classes beginning `lcars-bh-` and `lcars-lt-`. To hide the version line, hide `.lcars-bh-version` in a CSS snippet. To turn all motion off at once, use the **Pause all motion** switch under General, Debug.
+The banner and lights use CSS classes beginning `lcars-bh-` and `lcars-lt-`. To hide the version line, hide `.lcars-bh-version` with your own CSS. To turn all motion off at once, use the **Pause all motion** switch under General, Debug.
 
 ## Performance
 
@@ -172,7 +170,7 @@ The resting lights are cheap. A few light styles redraw every frame and are mark
 
 ## Compatibility and limits
 
-- **Dark mode only.** Light mode is not supported yet: the frame, palette and text colors are tuned for Minimal's dark scheme.
+- **Dark mode only.** Light mode is not supported yet: the frame, palette and text colors are tuned for a dark scheme (Minimal's is the tested one).
 - Desktop only (Windows, macOS, Linux). The plugin does not run on mobile.
 - Needs Obsidian 1.13.0 or newer (the styles use modern CSS: `pow()`, `hypot()`, `@property`, `color-mix()`).
 - The ribbon roles are remembered per vault. A vault that has never learned a button shows it neutral until you press it (a few common buttons are known from the start).
@@ -181,9 +179,9 @@ The resting lights are cheap. A few light styles redraw every frame and are mark
 
 ## Development
 
-`main.js` is the plugin's source and needs no build. `styles.css` is **generated**: edit `src/plugin.css` or the files in `snippets/`, then run `python3 tools/build_styles.py` (add `--check` to see whether it is stale). The release workflow refuses a tag if it is.
+`main.js` is the plugin's source and needs no build. `styles.css` is **generated**: edit `src/plugin.css` or the files in `theme/`, then run `python3 tools/build_styles.py` (add `--check` to see whether it is stale). The release workflow refuses a tag if it is.
 
-The theme is edited in a vault, in `.obsidian/snippets/`, and copied here into `snippets/`.
+The theme sources live in `theme/`.
 
 `tools/` has `build_styles.py`, which builds `styles.css`, `gen_motion_off.py`, which regenerates the block of CSS that turns motion off, and `embed_font.py`, which rebuilds the embedded Antonio font in `lcars-core` from `fonts/Antonio/`.
 

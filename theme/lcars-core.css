@@ -16,11 +16,11 @@
      - Style Manager, for the LCARS Palette pickers and the toggles.
    WITHOUT IT
      - Without Style Manager the palette defaults still apply (zero-weight :where()); only the pickers are lost.
-     - Without the LCARS Companion plugin: a still frame. No banner, stardate, condition, lights or standby dimming.
+     - Without the LCARS for Obsidian plugin: a still frame. No banner, stardate, condition, lights or standby dimming.
      - Without Notebook Navigator: the core File Explorer gets the row treatment. The row pitch without NN is UNVERIFIED.
      - Without Colorful Folders: no heat colors. Auto contrast and palette pairs need Colorful Folders 5.0.7 or newer, which sets --cf-color on each row.
-   WITHOUT THE COMPANION PLUGIN'S INTERFACE SWITCHES (General > Interface: Ribbon roles, Note title blocks): the ribbon stays one neutral column and title blocks are not drawn.
-   TOGGLE   Part of the LCARS Companion plugin: Settings > Community plugins. Core is one file: palette, frame, stardate, title blocks.
+   WITHOUT THE PLUGIN'S INTERFACE SWITCHES (General > Interface: Ribbon roles, Note title blocks): the ribbon stays one neutral column and title blocks are not drawn.
+   TOGGLE   Part of the LCARS for Obsidian plugin: Settings > Community plugins. Core is one file: palette, frame, stardate, title blocks.
    RELEASE  v0.1
    ------------------------------------------------------------ */
 
@@ -33,7 +33,7 @@
    LCARS FRAME PATCH — borders, spacing, elbows
    Layer: sits ON TOP of Minimal + Colorful Folders.
    Scope: cosmetic chrome only. Toggle off in
-   Settings > Community plugins > LCARS Companion to fully disable.
+   Settings > Community plugins > LCARS for Obsidian to fully disable.
 
    LCARS color sources:
    • Palette index ....... https://www.thelcars.com/colors.php
@@ -2283,7 +2283,7 @@ html body.cf-folder-auto .mod-left-split .nn-navitem.nn-folder[data-path*="/"]:n
    Notebook Navigator's Item height setting drives the whole grid:
    each row block = item height - 4px, plus the 4px black gap, in
    the ribbon, File Explorer and Bookmarks too. Notebook Navigator
-   only exposes the value inside its own pane; the LCARS Companion
+   only exposes the value inside its own pane; the LCARS for Obsidian
    plugin reads it there and sets --lcars-row on body. Without
    Notebook Navigator the grid stays 32px (28 + 4). Replaces the
    'Sidebar row height' slider.
@@ -2980,7 +2980,7 @@ body :is(
    • img — Minimal already gives images a slower, deliberate reveal. */
 
 /* ─────────────────────────────────────────────
-   40b. LCARS COMPANION BANNER ON THE GRID (2026-10-05)
+   40b. LCARS FOR OBSIDIAN BANNER ON THE GRID (2026-10-05)
    The banner's bottom edge already lands on a grid line: the
    plugin pads its height to whole rows. Its top edge is up to the
    theme, because the theme decides where each sidebar's grid
@@ -3142,7 +3142,7 @@ html body .workspace-split.mod-sidedock.mod-right-split
 }
 html body .workspace-split.mod-sidedock.mod-right-split
   > .workspace-tabs > .workspace-tab-container::before {
-  --c: var(--lcars-pane-top, var(--lcars-bracket-top, #37A6D1));   /* per pane, set by LCARS Companion */
+  --c: var(--lcars-pane-top, var(--lcars-bracket-top, #37A6D1));   /* per pane, set by LCARS for Obsidian */
   content: var(--lcars-pane-label, "SUB-SYS 01");
   top: 3px;
   border-color: var(--c);
@@ -3191,7 +3191,7 @@ html body .workspace-split.mod-sidedock.mod-right-split
    anything", then "more variation in opacity or brightness"). The
    blinkies fade between full color and a dim ghost of it, each on its
    own clock, so they drift in and out of step. Their brightest and
-   dimmest levels are the Companion's Brightness max / min settings
+   dimmest levels are the plugin's Brightness max / min settings
    (--lcars-light-max / --lcars-light-min, written onto body). Colors animate through
    registered properties, so the gradients repaint smoothly. The tick
    scale also crawls (stepped), and the bottom bars breathe in length. */
@@ -3733,10 +3733,10 @@ html:root:root body .mod-left-split .nn-navigation-pane .nn-navigation-pane-scro
 /* ═════════════════════════════════════════════════════════════
    LCARS — STARDATE  (2026-10-04)
 
-   Three things, all driven by the LCARS Companion plugin (it replaced the
+   Three things, all driven by the LCARS for Obsidian plugin (it replaced the
    old lcars-stardate.js script):
 
-   1. HOVER TOOLTIP. The Companion banner carries the stardate and
+   1. HOVER TOOLTIP. The plugin banner carries the stardate and
       the wall clock. Hovering shows the real date and time — the
       one thing the in-universe number can never tell you.
 
@@ -4074,7 +4074,7 @@ html:root:root body .mod-left-split .nn-navigation-pane .nn-navigation-pane-scro
 
 .lcars-title-right {
   /* The title's own font metrics, mirrored in by
-     the LCARS Companion plugin (Settings > LCARS Companion > General >
+     the LCARS for Obsidian plugin (Settings > LCARS for Obsidian > General >
      Note title blocks; with that switch off these title blocks are not drawn).
 
      This matters because the assembly is a SIBLING of the title, not a

@@ -186,14 +186,14 @@ body [data-testid="chat-messages"] .tw-border.tw-border-solid.tw-animate-pulse {
 /* ============================================================
    LCARS — SHIP LIFE (2026-10-05)
 
-   The second ambient pass. Companion to "LCARS - Ambient Life.css",
+   The second ambient pass. Pairs with "LCARS - Ambient Life.css",
    which this does NOT replace: that file handles interaction feedback
    (the selected row's double-pulse, the Copilot dot, the standby
    light). This one handles the ship's own machinery — the currents in
    the frame, the lit ribbon buttons breathing, standby vs. active, the
    scan indicator, and the subsystem readout.
 
-   Companion to the LCARS Companion plugin, which writes the body
+   Pairs with the LCARS for Obsidian plugin, which writes the body
    classes and the subsystem readout. Everything here degrades to
    a plain still frame if the plugin is off; nothing here is
    required for the frame to look right.
@@ -238,7 +238,7 @@ body [data-testid="chat-messages"] .tw-border.tw-border-solid.tw-animate-pulse {
 /* ------------------------------------------------------------
    NEEDS
      - LCARS Core (palette roles --lcars-dim, --lcars-readout-fill and others).
-     - The LCARS Companion plugin: it sets body.lcars-idle and body.lcars-busy and builds the .lcars-subsys readout.
+     - The LCARS for Obsidian plugin: it sets body.lcars-idle and body.lcars-busy and builds the .lcars-subsys readout.
      - ribbon-roles.js (CustomJS) for the ribbon breath on .is-visible, until the ribbon is ported into the plugin.
    WITHOUT IT
      - Without the plugin: a still frame; no standby dim, no subsystem readout.
@@ -336,7 +336,7 @@ body {
 /* ─────────────────────────────────────────────
    1. STANDBY AND FOCUS
 
-   body.lcars-idle is written by the LCARS Companion plugin. Nothing here
+   body.lcars-idle is written by the LCARS for Obsidian plugin. Nothing here
    polls for it and nothing depends on it existing: with the script
    off, the class is never added and the ship runs at full light
    forever, which is the old behaviour.
@@ -867,7 +867,7 @@ body.lcars-power-reading .workspace-split.mod-vertical.mod-root::before {
 /* ─────────────────────────────────────────────
    5. SCAN ACTIVITY — REMOVED 2026-10-05
 
-   body.lcars-busy is written by the LCARS Companion plugin, from work
+   body.lcars-busy is written by the LCARS for Obsidian plugin, from work
    that is actually in flight: a Copilot response streaming, or anything
    calling window.lcarsActivity.begin() / .end(). The class and the
    registry both stay, and the script still sets them.
@@ -889,7 +889,7 @@ body.lcars-power-reading .workspace-split.mod-vertical.mod-root::before {
 /* ─────────────────────────────────────────────
    6. SUBSYSTEM READOUT
 
-   Markup is built by the LCARS Companion plugin in the sidebar banner,
+   Markup is built by the LCARS for Obsidian plugin in the sidebar banner,
    NOT written into nn-bridge/data.json — that file belongs to the
    nn-bridge plugin and is rewritten whole on any settings save, so
    anything put there can be clobbered.

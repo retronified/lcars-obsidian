@@ -4,7 +4,7 @@
    ============================================================ */
 
 /* ######## src/plugin.css ######## */
-/* LCARS Companion — bridge banner.
+/* LCARS for Obsidian — bridge banner.
    Rows sit 4px apart and stay tight. The plugin pads the whole banner
    to a whole number of ribbon grid rows (--lcars-bh-pitch), so any
    spare space is at the bottom and the rows below stay on the grid. */
@@ -413,7 +413,7 @@ body.lcars-idle .lcars-lt:not([data-fx-off~="idleDim"]) { opacity: 0.5; }
 .vertical-tab-content:has(.lcars-set-sec), .lcars-set-sec, .lcars-set-body, .lcars-set-preview { overflow-anchor: none; }
 .vertical-tab-content:has(.lcars-set-sec) { padding-bottom: 12em; }
 
-/* Settings tabs (the Companion page). The tab bar and the lights preview
+/* Settings tabs (the plugin page). The tab bar and the lights preview
    stay pinned while the settings scroll under them. */
 .lcars-set-page { overflow-anchor: none; padding-bottom: 6em; }
 .lcars-set-page > .lcars-set-preview { overflow-anchor: none; }
@@ -1127,11 +1127,11 @@ body:is(.lcars-motion-off, .lcars-plugin-motion-off) .lcars-lt-seg { transition:
      - Style Manager, for the LCARS Palette pickers and the toggles.
    WITHOUT IT
      - Without Style Manager the palette defaults still apply (zero-weight :where()); only the pickers are lost.
-     - Without the LCARS Companion plugin: a still frame. No banner, stardate, condition, lights or standby dimming.
+     - Without the LCARS for Obsidian plugin: a still frame. No banner, stardate, condition, lights or standby dimming.
      - Without Notebook Navigator: the core File Explorer gets the row treatment. The row pitch without NN is UNVERIFIED.
      - Without Colorful Folders: no heat colors. Auto contrast and palette pairs need Colorful Folders 5.0.7 or newer, which sets --cf-color on each row.
-   WITHOUT THE COMPANION PLUGIN'S INTERFACE SWITCHES (General > Interface: Ribbon roles, Note title blocks): the ribbon stays one neutral column and title blocks are not drawn.
-   TOGGLE   Part of the LCARS Companion plugin: Settings > Community plugins. Core is one file: palette, frame, stardate, title blocks.
+   WITHOUT THE PLUGIN'S INTERFACE SWITCHES (General > Interface: Ribbon roles, Note title blocks): the ribbon stays one neutral column and title blocks are not drawn.
+   TOGGLE   Part of the LCARS for Obsidian plugin: Settings > Community plugins. Core is one file: palette, frame, stardate, title blocks.
    RELEASE  v0.1
    ------------------------------------------------------------ */
 
@@ -1144,7 +1144,7 @@ body:is(.lcars-motion-off, .lcars-plugin-motion-off) .lcars-lt-seg { transition:
    LCARS FRAME PATCH — borders, spacing, elbows
    Layer: sits ON TOP of Minimal + Colorful Folders.
    Scope: cosmetic chrome only. Toggle off in
-   Settings > Community plugins > LCARS Companion to fully disable.
+   Settings > Community plugins > LCARS for Obsidian to fully disable.
 
    LCARS color sources:
    • Palette index ....... https://www.thelcars.com/colors.php
@@ -3394,7 +3394,7 @@ html body.cf-folder-auto .mod-left-split .nn-navitem.nn-folder[data-path*="/"]:n
    Notebook Navigator's Item height setting drives the whole grid:
    each row block = item height - 4px, plus the 4px black gap, in
    the ribbon, File Explorer and Bookmarks too. Notebook Navigator
-   only exposes the value inside its own pane; the LCARS Companion
+   only exposes the value inside its own pane; the LCARS for Obsidian
    plugin reads it there and sets --lcars-row on body. Without
    Notebook Navigator the grid stays 32px (28 + 4). Replaces the
    'Sidebar row height' slider.
@@ -4091,7 +4091,7 @@ body :is(
    • img — Minimal already gives images a slower, deliberate reveal. */
 
 /* ─────────────────────────────────────────────
-   40b. LCARS COMPANION BANNER ON THE GRID (2026-10-05)
+   40b. LCARS FOR OBSIDIAN BANNER ON THE GRID (2026-10-05)
    The banner's bottom edge already lands on a grid line: the
    plugin pads its height to whole rows. Its top edge is up to the
    theme, because the theme decides where each sidebar's grid
@@ -4253,7 +4253,7 @@ html body .workspace-split.mod-sidedock.mod-right-split
 }
 html body .workspace-split.mod-sidedock.mod-right-split
   > .workspace-tabs > .workspace-tab-container::before {
-  --c: var(--lcars-pane-top, var(--lcars-bracket-top, #37A6D1));   /* per pane, set by LCARS Companion */
+  --c: var(--lcars-pane-top, var(--lcars-bracket-top, #37A6D1));   /* per pane, set by LCARS for Obsidian */
   content: var(--lcars-pane-label, "SUB-SYS 01");
   top: 3px;
   border-color: var(--c);
@@ -4302,7 +4302,7 @@ html body .workspace-split.mod-sidedock.mod-right-split
    anything", then "more variation in opacity or brightness"). The
    blinkies fade between full color and a dim ghost of it, each on its
    own clock, so they drift in and out of step. Their brightest and
-   dimmest levels are the Companion's Brightness max / min settings
+   dimmest levels are the plugin's Brightness max / min settings
    (--lcars-light-max / --lcars-light-min, written onto body). Colors animate through
    registered properties, so the gradients repaint smoothly. The tick
    scale also crawls (stepped), and the bottom bars breathe in length. */
@@ -4844,10 +4844,10 @@ html:root:root body .mod-left-split .nn-navigation-pane .nn-navigation-pane-scro
 /* ═════════════════════════════════════════════════════════════
    LCARS — STARDATE  (2026-10-04)
 
-   Three things, all driven by the LCARS Companion plugin (it replaced the
+   Three things, all driven by the LCARS for Obsidian plugin (it replaced the
    old lcars-stardate.js script):
 
-   1. HOVER TOOLTIP. The Companion banner carries the stardate and
+   1. HOVER TOOLTIP. The plugin banner carries the stardate and
       the wall clock. Hovering shows the real date and time — the
       one thing the in-universe number can never tell you.
 
@@ -5185,7 +5185,7 @@ html:root:root body .mod-left-split .nn-navigation-pane .nn-navigation-pane-scro
 
 .lcars-title-right {
   /* The title's own font metrics, mirrored in by
-     the LCARS Companion plugin (Settings > LCARS Companion > General >
+     the LCARS for Obsidian plugin (Settings > LCARS for Obsidian > General >
      Note title blocks; with that switch off these title blocks are not drawn).
 
      This matters because the assembly is a SIBLING of the title, not a
@@ -6438,14 +6438,14 @@ body [data-testid="chat-messages"] .tw-border.tw-border-solid.tw-animate-pulse {
 /* ============================================================
    LCARS — SHIP LIFE (2026-10-05)
 
-   The second ambient pass. Companion to "LCARS - Ambient Life.css",
+   The second ambient pass. Pairs with "LCARS - Ambient Life.css",
    which this does NOT replace: that file handles interaction feedback
    (the selected row's double-pulse, the Copilot dot, the standby
    light). This one handles the ship's own machinery — the currents in
    the frame, the lit ribbon buttons breathing, standby vs. active, the
    scan indicator, and the subsystem readout.
 
-   Companion to the LCARS Companion plugin, which writes the body
+   Pairs with the LCARS for Obsidian plugin, which writes the body
    classes and the subsystem readout. Everything here degrades to
    a plain still frame if the plugin is off; nothing here is
    required for the frame to look right.
@@ -6490,7 +6490,7 @@ body [data-testid="chat-messages"] .tw-border.tw-border-solid.tw-animate-pulse {
 /* ------------------------------------------------------------
    NEEDS
      - LCARS Core (palette roles --lcars-dim, --lcars-readout-fill and others).
-     - The LCARS Companion plugin: it sets body.lcars-idle and body.lcars-busy and builds the .lcars-subsys readout.
+     - The LCARS for Obsidian plugin: it sets body.lcars-idle and body.lcars-busy and builds the .lcars-subsys readout.
      - ribbon-roles.js (CustomJS) for the ribbon breath on .is-visible, until the ribbon is ported into the plugin.
    WITHOUT IT
      - Without the plugin: a still frame; no standby dim, no subsystem readout.
@@ -6588,7 +6588,7 @@ body {
 /* ─────────────────────────────────────────────
    1. STANDBY AND FOCUS
 
-   body.lcars-idle is written by the LCARS Companion plugin. Nothing here
+   body.lcars-idle is written by the LCARS for Obsidian plugin. Nothing here
    polls for it and nothing depends on it existing: with the script
    off, the class is never added and the ship runs at full light
    forever, which is the old behaviour.
@@ -7119,7 +7119,7 @@ body.lcars-power-reading .workspace-split.mod-vertical.mod-root::before {
 /* ─────────────────────────────────────────────
    5. SCAN ACTIVITY — REMOVED 2026-10-05
 
-   body.lcars-busy is written by the LCARS Companion plugin, from work
+   body.lcars-busy is written by the LCARS for Obsidian plugin, from work
    that is actually in flight: a Copilot response streaming, or anything
    calling window.lcarsActivity.begin() / .end(). The class and the
    registry both stay, and the script still sets them.
@@ -7141,7 +7141,7 @@ body.lcars-power-reading .workspace-split.mod-vertical.mod-root::before {
 /* ─────────────────────────────────────────────
    6. SUBSYSTEM READOUT
 
-   Markup is built by the LCARS Companion plugin in the sidebar banner,
+   Markup is built by the LCARS for Obsidian plugin in the sidebar banner,
    NOT written into nn-bridge/data.json — that file belongs to the
    nn-bridge plugin and is rewritten whole on any settings save, so
    anything put there can be clobbered.
@@ -7332,7 +7332,7 @@ body.lcars-motion-off .lcars-subsys-fill { animation: none !important; }
 
 /* ######## theme/lcars-nn-rows.css ######## */
 /* ============================================================
-   LCARS — Notebook Navigator row styling (Colorful Folders companion)
+   LCARS — Notebook Navigator row styling (Colorful Folders add-on)
    Canon: Picard LCARS Style Guide — square corners, no borders
    except on selection, buttons spaced apart, blue→gray heat ramp.
    ------------------------------------------------------------
@@ -7582,7 +7582,7 @@ html:root:root body .notebook-navigator.notebook-navigator :is(.nn-navitem, .nn-
 
    The selected row is left alone (active-item exception).
 
-   Companion to lcars-frame.css and lcars-nn-rows.css. Sits on
+   Pairs with lcars-frame.css and lcars-nn-rows.css. Sits on
    top of Colorful Folders. Scope: Notebook Navigator. The core
    File Explorer / Bookmarks tree is NOT handled here (NOTE 4).
 

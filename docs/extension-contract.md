@@ -6,18 +6,18 @@ The first user is a private calendar plugin, which supplies a countdown, event s
 
 ## Attaching
 
-The plugin publishes `window.lcarsCompanion` and fires `lcars-companion-ready` on `window` when it loads. It fires `lcars-companion-gone` when it unloads.
+The plugin publishes `window.lcarsObsidian` and fires `lcars-obsidian-ready` on `window` when it loads. It fires `lcars-obsidian-gone` when it unloads.
 
 ```js
 function attach(api) {
   if (!api || api.apiVersion !== 1) return;     // the interface version
-  var plugin = api.plugin;                       // the Companion plugin instance
+  var plugin = api.plugin;                       // the plugin instance
   Object.assign(api.hooks, { /* the hooks below */ });
   plugin.refreshLights();                        // rebuild the banner's lights with your hooks
 }
-if (window.lcarsCompanion) attach(window.lcarsCompanion);
-window.addEventListener("lcars-companion-ready", function () { attach(window.lcarsCompanion); });
-window.addEventListener("lcars-companion-gone", function () { /* drop your reference */ });
+if (window.lcarsObsidian) attach(window.lcarsObsidian);
+window.addEventListener("lcars-obsidian-ready", function () { attach(window.lcarsObsidian); });
+window.addEventListener("lcars-obsidian-gone", function () { /* drop your reference */ });
 ```
 
 Remove your hooks when your plugin unloads (`delete api.hooks.name`) and call `plugin.refreshLights()`.
@@ -26,14 +26,14 @@ Hooks run with `this` set to the plugin. Settings are in `this.settings`; `this.
 
 ## Statuses
 
-`window.lcarsCompanion.api.statuses`:
+`window.lcarsObsidian.api.statuses`:
 
 - `list()` returns `[{ id, label, hand, raised }]`.
 - `active()` returns `[{ id, source, since, until }]` for statuses raised now.
 - `raise(id, { source, until })` raises a status. `until` is an epoch time in milliseconds that replaces the status's own exit for this raise.
 - `clear(id, { source, force })` clears one. A `source` can only clear what it raised, unless `force` is true.
 
-Every change fires `lcars-companion-status-changed` on `window` with `{ id, change, source }`.
+Every change fires `lcars-obsidian-status-changed` on `window` with `{ id, change, source }`.
 
 The same operations are available as Obsidian links: `obsidian://lcars-status?raise=ID`, `clear=ID`, `toggle=ID`, with `until=MINUTES` and `force=1`.
 

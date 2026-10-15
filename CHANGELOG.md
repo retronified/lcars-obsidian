@@ -1,7 +1,12 @@
 # Changelog
 
-## Unreleased
+## 0.2.0
 
+- Changed: the plugin id is now `lcars-obsidian` (it was `lcars-companion`), so a by-hand install goes in `.obsidian/plugins/lcars-obsidian/`. If you installed 0.1.0, move your settings (`data.json`) into the new folder and remove the old one.
+- Changed: the extension interface is renamed from "companion" to "extension". `window.lcarsCompanion` is now `window.lcarsObsidian`, and the events `lcars-companion-ready`, `lcars-companion-gone` and `lcars-companion-status-changed` are now `lcars-obsidian-ready`, `lcars-obsidian-gone` and `lcars-obsidian-status-changed`. The doc moved to `docs/extension-contract.md`. It is still experimental.
+- Changed: the theme sources moved from `snippets/` to `theme/`, and the README no longer describes copying snippets by hand. The theme comes with the plugin.
+- Changed: Style Manager is described as optional.
+- Changed: wording across the README, the theme comments and the plugin source no longer calls the plugin the "Companion".
 - Fixed: Style Manager could not load the LCARS Palette pickers. The "Void black" description held a colon in the middle of the sentence, which broke the settings block's YAML, so none of the palette settings appeared. The description is now quoted.
 
 ## 0.1.0
