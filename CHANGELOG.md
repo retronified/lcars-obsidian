@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Fixed: a Custom timing of two numbers (on and off) forced a hard blink on every light behavior. Now only the plain flash blinks; pulse, flicker, glow and scan keep their own motion and use the combined length as their cycle.
+- Changed: the banner is not mounted on phones and tablets.
+
 ## 0.2.0
 
 - Changed: the plugin id is now `lcars-obsidian` (it was `lcars-companion`), so a by-hand install goes in `.obsidian/plugins/lcars-obsidian/`. If you installed 0.1.0, move your settings (`data.json`) into the new folder and remove the old one.

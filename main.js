@@ -174,7 +174,9 @@ function condTiming(st) {
   var dur = base * (st.speed === "slow" ? 1.8 : st.speed === "fast" ? 0.5 : 1), onoff = null;
   if (st.speed === "custom") {
     var n = String(st.timing || "").split(/[\s,\/]+/).filter(Boolean).map(Number).filter(function (x) { return isFinite(x) && x > 0; });
-    if (n.length >= 2) { onoff = { on: n[0], off: n[1] }; dur = (n[0] + n[1]) / 1000; }
+    // Two numbers are milliseconds on and off. Only the plain flash is an on/off effect, so only it gets the hard blink;
+    // pulse, flicker, glow and scan keep their own motion and just take the combined length as their cycle.
+    if (n.length >= 2) { if (st.behavior === "flash") onoff = { on: n[0], off: n[1] }; dur = (n[0] + n[1]) / 1000; }
     else if (n.length === 1) dur = n[0];
   }
   return { dur: Math.max(0.4, dur), onoff: onoff };
@@ -1420,6 +1422,8 @@ class LcarsObsidian extends obsidian.Plugin {
   // pane headers and outside any view's own scroller (2026-10-06).
   mountPoints() {
     var out = [];
+    // The banner is a desktop feature for now: no banner on phones and tablets.
+    if (obsidian.Platform.isMobile) return out;
     if (this.settings.showInSidebar && this.settings.spanRibbon) {
       var rb = document.querySelector(".workspace-ribbon:is(.mod-left, .mod-primary)");
       if (rb && rb.parentElement) out.push(rb.parentElement);
