@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Fixed: Style Manager could not load the LCARS Palette pickers. The "Void black" description held a colon in the middle of the sentence, which broke the settings block's YAML, so none of the palette settings appeared. The description is now quoted.
+
 ## 0.1.0
 
 First release. The repository holds the plugin and the theme it carries.

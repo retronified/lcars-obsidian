@@ -5433,7 +5433,7 @@ settings:
     -
         id: lcars-void
         title: Void black
-        description: The fixed color behind the NN list, between rows, and in shadow shading: black in a dark theme, white in a light one
+        description: 'The fixed color behind the NN list, between rows, and in shadow shading: black in a dark theme, white in a light one'
         type: variable-themed-color
         format: hex
         default-light: '#FFFFFF'
