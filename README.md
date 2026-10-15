@@ -5,7 +5,7 @@ A Picard-era LCARS look for [Obsidian](https://obsidian.md), installed as one pl
 - **The theme**: the LCARS frame, palette, motion, ribbon and sidebar rows, built into the plugin's stylesheet. There is nothing to copy or switch on.
 - **The plugin features**: a ship's bridge banner at the top of your sidebar, and a row of **running lights** under it that can show status, time and activity.
 
-> Desktop only. Needs Obsidian 1.13.0 or newer. **Dark mode only: light mode is not supported yet.** Version 0.2.0.
+> Built for desktop. Loads on mobile without the banner (the look is untested there). Needs Obsidian 1.13.0 or newer. **Dark mode only: light mode is not supported yet.** Version 0.2.0.
 
 LCARS was designed by Michael Okuda. This is an unofficial fan work; see [CREDITS.md](CREDITS.md).
 
@@ -50,7 +50,7 @@ The plugin works on its own: the theme is part of it, and every theme variable t
 
 ## Requirements
 
-**Always:** Obsidian 1.13.0 or newer, on desktop. Nothing here runs on mobile.
+**Always:** Obsidian 1.13.0 or newer. Desktop is the supported platform; on mobile the plugin loads but draws no banner.
 
 ### The theme (built into the plugin)
 
@@ -171,7 +171,7 @@ The resting lights are cheap. A few light styles redraw every frame and are mark
 ## Compatibility and limits
 
 - **Dark mode only.** Light mode is not supported yet: the frame, palette and text colors are tuned for a dark scheme (Minimal's is the tested one).
-- Desktop only (Windows, macOS, Linux). The plugin does not run on mobile.
+- Desktop is the supported platform (Windows, macOS, Linux). On phones and tablets the plugin loads but draws no banner, and the theme is untested there.
 - Needs Obsidian 1.13.0 or newer (the styles use modern CSS: `pow()`, `hypot()`, `@property`, `color-mix()`).
 - The ribbon roles are remembered per vault. A vault that has never learned a button shows it neutral until you press it (a few common buttons are known from the start).
 - Notebook Navigator's own Shortcuts and Recent files settings change the sidebar's layout. The theme lines the rows up for the usual combinations; tell us if one looks uneven.

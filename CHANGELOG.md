@@ -3,7 +3,7 @@
 ## Unreleased
 
 - Fixed: a Custom timing of two numbers (on and off) forced a hard blink on every light behavior. Now only the plain flash blinks; pulse, flicker, glow and scan keep their own motion and use the combined length as their cycle.
-- Changed: the banner is not mounted on phones and tablets.
+- Changed: the plugin now loads on mobile (`isDesktopOnly` is false), but the banner is not mounted on phones and tablets. The theme is untested on mobile.
 
 ## 0.2.0
 

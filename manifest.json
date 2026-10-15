@@ -5,7 +5,7 @@
   "minAppVersion": "1.13.0",
   "description": "Banner and running lights for the LCARS theme: a ship's bridge at the top of your sidebar with a stardate, a condition line, a ship status readout, and a row of lights that follows your statuses.",
   "author": "retronified",
-  "isDesktopOnly": true,
+  "isDesktopOnly": false,
   "fundingUrl": {
     "Ko-fi": "https://ko-fi.com/retronified",
     "Buy Me a Coffee": "https://buymeacoffee.com/retron"
