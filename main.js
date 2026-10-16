@@ -1111,10 +1111,974 @@ function startRibbonRoles(plugin) {
   };
 }
 
+// ─────────────────────────────────────────────────────────────
+// Phone layout: the slab (2026-10-15 design; spec in the LCARS Interface
+// project, "LCARS Mobile – Build Spec"). Reading view = thin capped bars
+// with keys. Left drawer = one solid slate slab whose top and bottom edges
+// run out as the same thin bars. Right drawer = thin bracket with a solid
+// blue subframe, the view selector as a pill on top, and the details and
+// sync in a footer strip. Everything is scoped to body.is-phone plus a
+// class this plugin sets, so desktop and tablet never see it and the
+// toggle works.
+// Sizes are design units: 1 unit = 1/300 of the screen width. Keys are
+// never shorter than 44px (tap size).
+// One shared bottom offset (--ms-bot, Obsidian's own navbar-bottom-offset,
+// which clears the Android navigation buttons) places the lower bar of the
+// reading view, the left slab and the right bracket on the same line.
+// Obsidian slides the note and the bottom bar sideways by the drawer's
+// width, so each drawer is exactly as
+// wide as its panel and the note keeps showing beside it. Obsidian's own
+// backdrop would darken the note's bars and make them a different gray
+// from the drawers', so the backdrop is made clear and the note's content
+// is dimmed here instead, leaving the bars at full brightness. The
+// connections between the drawer and the note's bars are drawn on the
+// note's side (the note's bars lose their end cap and gain the inner curve
+// while a drawer is open); the plugin mirrors Obsidian's is-left-sidedock-
+// open and is-right-sidedock-open classes onto the body for this.
+// Selectors come from the Mobile Frame snippet and Obsidian 1.14's own
+// stylesheet; the right drawer's header and selector pill still need a
+// check on a real phone.
+// ─────────────────────────────────────────────────────────────
+var MS_ID = "lcars-mobile-slab-style", MS_CLASS = "lcars-mobile-slab";
+var MS_CSS = (function () {
+  var u = function (n) { return "calc(" + n + " * var(--ms-u))"; };
+  var B = "body.is-phone." + MS_CLASS, D = "  ";
+  var L = [];
+  var add = function (sel, decls) { L.push(sel + " {\n" + decls.map(function (d) { return D + d + ";"; }).join("\n") + "\n}"); };
+  var L_ = B + " .workspace-drawer.mod-left", R_ = B + " .workspace-drawer.mod-right";
+
+  add(B, [
+    "--ms-u: calc(100vw / 300)",
+    "--ms-frame: var(--lcars-frame, #2f3749)",
+    "--ms-frame-r: var(--lcars-row-bg, #1e2229)",
+    "--ms-bar: var(--lcars-ribbon-one-shot-icon, #6d748c)",
+    "--ms-cap: var(--lcars-ribbon-one-shot-pressed-icon, #9ea5ba)",
+    "--ms-key: var(--lcars-ribbon, #52596e)",
+    "--ms-blue: #37a6d1",
+    "--ms-blue-up: #41c4f7",
+    "--ms-red: var(--lcars-ribbon-right-rest, #ae3e2c)",
+    "--ms-text: var(--lcars-status-text, #d2d5df)",
+    "--ms-salmon: var(--lcars-ribbon-right-bright, #ff977b)",
+    "--ms-ink: #000000",
+    /* The shared lines every screen hangs from */
+    "--ms-top: max(" + u(14) + ", var(--view-header-top-offset, 0px))",
+    "--ms-bot: var(--ms-bot-override, max(" + u(18) + ", var(--navbar-bottom-offset, 0px)))",
+    "--ms-bar-h: " + u(12),
+    "--ms-gap: " + u(5),
+    "--ms-key-h: max(" + u(26) + ", 44px)",
+    "--ms-key-w: " + u(44),
+    "--ms-sel-h: max(" + u(22) + ", 40px)",
+    "--ms-foot-h: max(" + u(24) + ", 40px)",
+    "--ms-slab-w: " + u(236),
+    "--ms-hdr-h: calc(var(--ms-bar-h) + var(--ms-gap) + var(--ms-key-h))",
+    "--ms-nav-h: calc(var(--ms-hdr-h) + var(--ms-bot))",
+    "--ms-fade: var(--lcars-fade-dur, 120ms) var(--lcars-fade-ease, linear)",
+    /* Obsidian's own sizes, matched to the new bars */
+    "--view-header-height: var(--ms-hdr-h)",
+    "--navbar-height: var(--ms-nav-h)",
+    "--navbar-width: auto",
+    "--navbar-max-width: none",
+    "--navbar-radius: 0",
+    "--view-header-action-radius: 0",
+    "--mobile-sidebar-radius: 0",
+    "--view-top-fade-mask: none",
+    "--view-bottom-fade-mask: none",
+    "background: var(--ms-ink)"
+  ]);
+
+  /* ═══ 1. READING VIEW: thin capped bars and keys (concept B) ═══ */
+
+  /* Top: the header holds the bar (::before) and, below it, the key row. Obsidian floats the header at the top offset (margin in floating mode, padding otherwise), so both are set here. */
+  add(B + " .view-header", [
+    "left: 0", "right: 0", "box-sizing: border-box",
+    "margin-top: var(--ms-top) !important",
+    "height: var(--ms-hdr-h) !important",
+    "padding: calc(var(--ms-bar-h) + var(--ms-gap)) " + u(14) + " 0 !important",
+    "gap: 0",
+    "align-items: flex-start",
+    "background: transparent !important",
+    "border: 0 !important",
+    "box-shadow: none !important",
+    "backdrop-filter: none !important"
+  ]);
+  /* The bar: cap, gap, body, gap, cap. Outer corners rounded by the box. */
+  var barGrad = "linear-gradient(to right, var(--ms-cap) 0 " + u(14) + ", transparent " + u(14) + " " + u(18) +
+    ", var(--ms-bar) " + u(18) + " calc(100% - " + u(18) + "), transparent calc(100% - " + u(18) + ") calc(100% - " + u(14) + "), var(--ms-cap) calc(100% - " + u(14) + "))";
+  add(B + " .view-header::before", [
+    'content: ""', "position: absolute", "top: 0", "left: " + u(10), "right: " + u(10),
+    "height: var(--ms-bar-h)", "border-radius: " + u(6), "background: " + barGrad, "pointer-events: none"
+  ]);
+  /* Stardate: a black cut in the bar just left of the right end cap, as wide as its text. (The first version used a negative offset written as -calc(), which is invalid, so the browser ignored it and the tag fell into the key row.) */
+  add(B + " .view-header::after", [
+    'content: var(--padd-stardate, "78756.2")', "position: absolute", "top: 0", "right: " + u(28), "height: var(--ms-bar-h)", "box-sizing: border-box",
+    "padding: 0 " + u(5), "display: flex", "align-items: center", "white-space: nowrap",
+    "background: var(--ms-ink)", "color: var(--ms-text)", "font-family: var(--lcars-label-font, 'Helvetica Neue', sans-serif)",
+    "font-size: " + u(10), "letter-spacing: 0.12em", "line-height: 1", "pointer-events: none"
+  ]);
+  add(B + " .view-header > *", ["position: relative", "z-index: 2"]);
+  add(B + " .view-header .view-header-left, " + B + " .view-header .view-actions", [
+    "background: transparent !important", "border: 0 !important", "box-shadow: none !important",
+    "backdrop-filter: none !important", "border-radius: 0 !important", "padding: 0", "height: var(--ms-key-h)"
+  ]);
+  add(B + " .view-header .view-actions", ["gap: var(--ms-gap)", "margin-left: auto"]);
+  add(B + " .view-header .view-actions::after", ["display: none !important"]);
+  /* Keys: slate pill, black icon */
+  add(B + " .view-header .view-action", [
+    "width: var(--ms-key-w)", "height: var(--ms-key-h)", "border-radius: 999px !important",
+    "background: var(--ms-key) !important", "border: 0 !important", "box-shadow: none", "backdrop-filter: none !important",
+    "--icon-color: #000", "--icon-color-hover: #000", "--icon-color-active: #000", "--icon-color-focus: #000", "color: #000",
+    "transition: background-color var(--ms-fade)"
+  ]);
+  add(B + " .view-header .view-action:active", ["background: var(--ms-blue-up) !important", "transition: none"]);
+  /* Outline opens the right drawer: dark red. Reading mode on: blue. */
+  add(B + " .view-header .view-actions .view-action:nth-last-child(3)", ["background: var(--ms-red) !important"]);
+  add(B + " .workspace-leaf-content[data-mode=\"preview\"] .view-header .view-actions .view-action:nth-last-child(2)", ["background: var(--ms-blue) !important"]);
+
+  /* Bottom: key row above the bar, and the bar a shared offset above the screen's bottom edge, clear of the Android navigation buttons. */
+  add(B + " .mobile-navbar", [
+    "left: 0", "right: 0", "width: auto !important", "max-width: none !important", "margin: 0 !important", "box-sizing: border-box",
+    "padding: 0 " + u(14) + " calc(var(--ms-bar-h) + var(--ms-gap) + var(--ms-bot)) !important",
+    "height: var(--ms-nav-h) !important",
+    "border-radius: 0 !important", "background: transparent !important", "box-shadow: none !important",
+    "backdrop-filter: none !important", "border: 0 !important"
+  ]);
+  add(B + " .mobile-navbar::before", [
+    'content: ""', "position: absolute", "bottom: var(--ms-bot)", "left: " + u(10), "right: " + u(10),
+    "height: var(--ms-bar-h)", "border-radius: " + u(6), "background: " + barGrad, "pointer-events: none"
+  ]);
+  add(B + " .mobile-navbar::after", ["display: none !important"]);
+  add(B + " .mobile-navbar-actions", ["gap: var(--ms-gap)", "height: var(--ms-key-h)", "--icon-color: #000", "--icon-color-active: #000", "--icon-color-focus: #000"]);
+  add(B + " .mobile-navbar-action", [
+    "flex: 1 1 0", "width: auto", "height: var(--ms-key-h)", "margin: 0 !important", "border-radius: 999px",
+    "background: var(--ms-key)", "transition: background-color var(--ms-fade)"
+  ]);
+  add(B + " .mobile-navbar-action .clickable-icon, " + B + " .mobile-navbar-action button", ["border-radius: 999px", "background: transparent !important"]);
+  add(B + " .mobile-navbar-action:nth-child(3)", ["background: var(--ms-blue)"]);
+  add(B + " .mobile-navbar-action:active, " + B + " .mobile-navbar-action.mobile-tap", ["background: var(--ms-blue-up)", "opacity: 1", "transition: none"]);
+  add(B + " .mobile-navbar-tabs-number, " + B + " .mobile-navbar-action .navbar-action-flair", ["color: #000", "opacity: 1"]);
+
+  /* Note colors */
+  add(B + " .workspace-leaf-content[data-type=\"markdown\"]", ["background: var(--ms-ink)"]);
+
+  /* Dim the note beside an open drawer the way stock Obsidian does, but only its content and keys; the bars stay at full brightness so they match the drawers. */
+  var ANY = B + ":is(.lcars-ms-left-open, .lcars-ms-right-open)";
+  add(B + " .workspace-drawer-backdrop", ["background: transparent !important", "backdrop-filter: none !important"]);
+  add(B + " .mod-root .view-content, " + B + " .mod-root .view-header > *, " + B + " .mobile-navbar-actions", ["transition: opacity 150ms ease-out"]);
+  add(ANY + " .mod-root .view-content, " + ANY + " .mod-root .view-header > *, " + ANY + " .mobile-navbar-actions", ["opacity: 0.4"]);
+
+  /* ═══ 2. LEFT DRAWER: THE SLAB ═══ */
+  /* Obsidian paints the drawer, its fades and the view selector's backdrop from this one variable; on the left drawer it is the slab color, so no black boxes and no fade to black. The backdrop that dims the note is Obsidian's own. */
+  add(L_, [
+    "--mobile-sidebar-background: var(--ms-frame)",
+    "width: var(--ms-slab-w) !important", "min-width: 0 !important", "max-width: none !important",
+    "border-radius: 0", "box-shadow: none", "border: 0", "background: transparent !important"
+  ]);
+  /* The slab itself: solid slate, big rounded outer corners on the left. */
+  add(L_ + " .workspace-drawer-inner", [
+    "position: relative", "box-sizing: border-box", "flex: none", "width: 100%",
+    "margin: var(--ms-top) 0 var(--ms-bot)", "height: calc(100% - var(--ms-top) - var(--ms-bot))",
+    "background-color: var(--ms-frame) !important", "box-shadow: 0 -1px 0 0 var(--ms-frame), 0 1px 0 0 var(--ms-frame)",
+    "border-radius: " + u(26) + " 0 0 " + u(26), "padding: " + u(6) + " 0 " + u(6) + " 0"
+  ]);
+  /* Notebook Navigator's rows run the full width of the slab, edge to edge like the desktop. The scroll bar lives in a black strip down the right edge, so the rows end where the strip begins. */
+  add(L_ + " .notebook-navigator", ["--nn-scroller-padding: 0px"]);
+  /* Rows run the full width of the slab, to its right edge too; the scroll bar is left to Obsidian (or hidden with the Hider plugin). */
+  add(L_ + " .nn-navigation-pane-scroller, " + L_ + " .nn-list-pane-scroller", ["padding: 0 !important", "background-color: var(--ms-frame) !important"]);
+  add(L_ + " .notebook-navigator :is(.nn-navitem, .nn-shortcut-item)[data-path]:not(.nn-header)", ["margin-right: 0 !important", "margin-inline-end: 0 !important"]);
+  add(L_ + " .workspace-leaf-content::after, " + L_ + " .nav-buttons-container::after, " + L_ + " .nn-pane-bottom-toolbar::before", ["display: none !important", "background: none !important"]);
+  add(L_ + " .nn-mobile-toolbar", ["padding-left: " + u(10) + " !important", "padding-right: " + u(10) + " !important"]);
+  /* The note, dimmed beside the slab, picks up the connection: its bars run flush to the slab with a small inner curve, and the left end cap goes. */
+  var fil = function (pos, c) {
+    return "radial-gradient(circle at " + c + ", transparent " + u(12) + ", var(--ms-frame) calc(" + u(12) + " + 0.5px)) no-repeat " + pos + " / " + u(12) + " " + u(12);
+  };
+  var barOnly = function (pos, size) {
+    return "linear-gradient(to right, var(--ms-frame) 0 " + u(36) + ", transparent " + u(36) + " " + u(40) + ", var(--ms-bar) " + u(40) + ") no-repeat " + pos + " / " + size;
+  };
+  var LO = B + ".lcars-ms-left-open";
+  add(LO + " .view-header::before", [
+    "left: -2px", "top: -1px", "height: calc(" + u(24) + " + 1px)", "border-radius: 0",
+    "background: " + fil("0 calc(" + u(12) + " + 1px)", "100% 100%") + ", " + barOnly("0 0", "100% calc(" + u(12) + " + 1px)")
+  ]);
+  add(LO + " .mobile-navbar::before", [
+    "left: -2px", "height: " + u(24), "border-radius: 0",
+    "background: " + fil("0 0", "100% 0") + ", " + barOnly("0 " + u(12), "100% " + u(12))
+  ]);
+  /* With the right drawer open the note's right end meets the drawer: no right end cap, and the bottom bar gets the slab's inner curve above it. */
+  var RO = B + ".lcars-ms-right-open";
+  var capL = "linear-gradient(to right, var(--ms-cap) 0 " + u(14) + ", transparent " + u(14) + " " + u(18) + ", var(--ms-bar) " + u(18) + ")";
+  var capJ = "linear-gradient(to right, var(--ms-cap) 0 " + u(14) + ", transparent " + u(14) + " " + u(18) + ", var(--ms-bar) " + u(18) + " calc(100% - " + u(40) + "), transparent calc(100% - " + u(40) + ") calc(100% - " + u(36) + "), var(--ms-frame-r) calc(100% - " + u(36) + "))";
+  add(RO + " .view-header::before", ["right: -2px", "border-radius: " + u(6) + " 0 0 " + u(6), "background: " + capL]);
+  add(RO + " .mobile-navbar::before", [
+    "right: -2px", "height: " + u(24), "border-radius: 0",
+    "background: radial-gradient(circle at 0 0, transparent " + u(12) + ", var(--ms-frame-r) calc(" + u(12) + " + 0.5px)) no-repeat right 0 top 0 / " + u(12) + " " + u(12) + ", " + capJ + " no-repeat 0 " + u(12) + " / 100% " + u(12)
+  ]);
+  /* Everything inside sits on the slab, no black panels of its own. */
+  add(L_ + " .workspace-drawer-header, " + L_ + " .workspace-drawer-tab-container, " + L_ + " .workspace-drawer-active-tab-container, " +
+      L_ + " .workspace-drawer-tab-options, " + L_ + " .workspace-drawer-tab-select, " + L_ + " .workspace-leaf-content, " + L_ + " .nav-buttons-container", [
+    "background: transparent !important", "backdrop-filter: none !important", "box-shadow: none !important"
+  ]);
+  add(L_ + " .workspace-drawer-header-name-text, " + L_ + " .workspace-drawer-vault-name", [
+    "font-family: var(--lcars-label-font, var(--lcars-heading-font, 'Antonio', sans-serif))", "text-transform: uppercase", "letter-spacing: 0.08em", "color: var(--ms-cap)"
+  ]);
+  add(B + " .workspace-drawer .notebook-navigator", ["--nn-theme-mobile-bg: var(--ms-frame)"]);
+  /* Notebook Navigator's toolbar buttons as keys (Android; on iOS the toolbar is at the bottom). */
+  add(B + " .workspace-drawer .nn-mobile-toolbar", ["background: transparent !important", "border: 0 !important", "gap: var(--ms-gap)"]);
+  add(B + " .workspace-drawer .nn-mobile-toolbar-pill, " + B + " .workspace-drawer .nn-mobile-toolbar-left, " + B + " .workspace-drawer .nn-mobile-toolbar-right", [
+    "background: transparent !important", "border: 0 !important", "box-shadow: none !important"
+  ]);
+  /* Pure-circle buttons become pills: the icon centered, just a little room either side. The tap area is kept at 44px high with an invisible extension. */
+  add(L_ + " .nn-mobile-toolbar-pill", ["gap: var(--ms-gap)", "justify-content: space-between !important", "padding: 0 " + u(2)]);
+  add(B + " .workspace-drawer button.nn-mobile-toolbar-button", [
+    "position: relative", "flex: 0 0 auto !important", "width: auto !important", "min-width: 0 !important",
+    "height: max(" + u(22) + ", 36px) !important", "min-height: 0 !important", "padding: 0 14px !important",
+    "border-radius: 999px !important", "background: var(--ms-key) !important", "transition: background-color var(--ms-fade)"
+  ]);
+  add(B + " .workspace-drawer button.nn-mobile-toolbar-button::before", ['content: ""', "position: absolute", "left: 0", "right: 0", "top: -4px", "bottom: -4px"]);
+  add(L_ + " .workspace-drawer-header-icon, " + L_ + " .workspace-drawer-vault-actions .clickable-icon", [
+    "width: auto !important", "min-width: 0 !important", "height: max(" + u(22) + ", 36px) !important", "padding: 0 14px !important",
+    "border-radius: 999px !important", "background: var(--ms-key) !important", "color: #000", "--icon-color: #000",
+    "display: flex", "align-items: center", "justify-content: center", "box-shadow: none !important"
+  ]);
+  add(B + " .workspace-drawer button.nn-mobile-toolbar-button svg:not(.nn-vault-icon-svg)", ["stroke: #000"]);
+  add(B + " .workspace-drawer button.nn-mobile-toolbar-button.nn-mobile-toolbar-button-active", ["background: var(--ms-blue) !important"]);
+  add(B + " .workspace-drawer button.nn-mobile-toolbar-button:active", ["background: var(--ms-blue-up) !important", "transition: none"]);
+  /* View selector (both drawers): blue outline pill, in Obsidian's own spot */
+  add(B + " .workspace-drawer .workspace-drawer-tab-select .workspace-tab-header-inner", [
+    "background: transparent !important", "box-shadow: inset 0 0 0 1.5px var(--ms-blue) !important", "border-radius: 999px", "color: var(--ms-blue)", "--icon-color: var(--ms-blue)"
+  ]);
+  add(B + " .workspace-drawer .workspace-drawer-tab-select .workspace-tab-header-inner-title", [
+    "font-family: var(--lcars-label-font, var(--lcars-heading-font, 'Antonio', sans-serif))", "text-transform: uppercase", "letter-spacing: 0.08em"
+  ]);
+  /* Left drawer: the Notebook Navigator button is solid blue with black type. */
+  add(L_ + " .workspace-drawer-tab-select .workspace-tab-header-inner", [
+    "background: var(--ms-blue) !important", "box-shadow: none !important", "color: #000", "--icon-color: #000"
+  ]);
+  add(B + " .workspace-drawer .workspace-drawer-tab-options-list", [
+    "background: var(--ms-ink) !important", "box-shadow: inset 0 0 0 1.5px var(--ms-blue) !important", "border-radius: " + u(18) + " !important"
+  ]);
+
+  /* ═══ 3. RIGHT DRAWER: A LIGHT-GRAY SLAB FRAMING A BLACK WINDOW (the "gap" junction) ═══ */
+  /* The top bar passes over from the reading view with an end cap; the slab hangs below it behind a thin gap and carries the lower bar into an elbow up the right edge. Inside, Obsidian's own layout: header (details, sync) on top, the window, the view selector below. */
+  add(R_, [
+    "--mobile-sidebar-background: var(--ms-frame-r)",
+    "width: " + u(246) + " !important", "min-width: 0 !important", "max-width: none !important", "border-radius: 0", "box-shadow: none", "border: 0",
+    "background: transparent !important", "padding: 0"
+  ]);
+  add(R_ + "::before", [
+    'content: ""', "position: absolute", "left: 0", "right: 0", "top: var(--ms-top)", "height: var(--ms-bar-h)",
+    "background: " + [
+      "radial-gradient(circle at " + u(6) + " " + u(6) + ", var(--ms-cap) " + u(6) + ", transparent calc(" + u(6) + " + 0.5px)) no-repeat right " + u(12) + " top 0 / " + u(12) + " " + u(12),
+      "radial-gradient(circle at " + u(6) + " " + u(6) + ", var(--ms-cap) " + u(6) + ", transparent calc(" + u(6) + " + 0.5px)) no-repeat right " + u(10) + " top 0 / " + u(12) + " " + u(12),
+      "linear-gradient(var(--ms-cap), var(--ms-cap)) no-repeat right " + u(16) + " top 0 / " + u(2) + " " + u(12),
+      "linear-gradient(var(--ms-bar), var(--ms-bar)) no-repeat left 0 top 0 / calc(100% - " + u(28) + ") 100%"
+    ].join(", "),
+    "pointer-events: none", "z-index: 2"
+  ]);
+  add(R_ + " .workspace-drawer-inner", [
+    "position: absolute", "box-sizing: border-box", "left: 0", "right: 0",
+    "top: calc(var(--ms-top) + var(--ms-bar-h) + " + u(6) + ")", "bottom: var(--ms-bot)",
+    "background: var(--ms-frame-r) !important", "border-radius: " + u(18) + " " + u(18) + " " + u(26) + " 0",
+    "padding: " + u(6) + " 0 0 0 !important"
+  ]);
+  /* Header: details and sync on the gray, in black type. */
+  add(R_ + " .workspace-drawer-header, " + R_ + " .workspace-drawer-header *", ["background: transparent !important", "box-shadow: none !important", "backdrop-filter: none !important"]);
+  add(R_ + " .workspace-drawer-header", [
+    "padding-left: " + u(14) + " !important", "padding-right: " + u(16) + " !important",
+    "padding-top: " + u(8) + " !important", "padding-bottom: " + u(8) + " !important", "gap: " + u(12)
+  ]);
+  add(R_ + " .workspace-drawer-header-name-text", [
+    "font-family: var(--lcars-heading-font, 'Antonio', sans-serif)", "letter-spacing: 0.06em", "text-transform: uppercase", "color: var(--ms-text)"
+  ]);
+  add(R_ + " .workspace-drawer-header-info", ["color: var(--ms-cap)", "letter-spacing: 0.06em", "text-transform: uppercase", "margin-top: " + u(6) + " !important"]);
+  /* Sync indicator: a black disc with a colored mark: blue at rest, orange while working, red on error. */
+  add(R_ + " .workspace-drawer-header-icon", [
+    "background: #000 !important", "border-radius: 999px !important", "color: var(--ms-blue)", "--icon-color: var(--ms-blue)", "padding: 0", "align-items: center", "justify-content: center"
+  ]);
+  add(R_ + " .sync-status-icon.mod-working", ["color: var(--ms-salmon)", "--icon-color: var(--ms-salmon)"]);
+  add(R_ + " .sync-status-icon.mod-error", ["color: var(--ms-red-alert, #ff6753)", "--icon-color: var(--ms-red-alert, #ff6753)"]);
+  /* The window: Obsidian's content area, black, inset in the slab with rounded corners. */
+  add(R_ + " .workspace-drawer-tab-container", ["margin: " + u(4) + " " + u(12) + " 0", "background: transparent !important"]);
+  add(R_ + " .workspace-drawer-active-tab-container, " + R_ + " .workspace-leaf-content", ["background: transparent !important"]);
+  add(R_ + " .workspace-drawer-active-tab-content", [
+    "background: var(--ms-window, #000) !important", "border-radius: " + u(18), "overflow: hidden", "flex: 1 1 auto"
+  ]);
+  /* No scroll fade: Obsidian's own fades are drawn from the sidebar color, which on this drawer is the gray. */
+  add(R_ + " .workspace-leaf-content::after, " + R_ + " .nav-buttons-container::after", ["display: none !important"]);
+  add(R_ + " .workspace-drawer-tab-container a, " + R_ + " .workspace-drawer-tab-container .is-active", ["color: var(--ms-blue)"]);
+  /* View selector: a black pill with a blue outline, in the lower gray band, in Obsidian's own spot. */
+  add(R_ + " .workspace-drawer-tab-options", ["margin: " + u(8) + " 0 0", "background: transparent !important"]);
+  add(R_ + " .workspace-drawer-tab-select .workspace-tab-header-inner", ["background: #000 !important"]);
+
+  /* ═══ 4. WITH THE MAIN LCARS PLUGIN ON THE PHONE ═══ */
+  /* Its palette and styles now reach the phone too. These rules are raised in specificity (html:root) so they hold. */
+  var H = "html:root " + B;
+  /* Behind the Android navigation buttons and everywhere else the app shows through: black, never gray. */
+  add(H, ["--system-status-background: #000", "--background-secondary: #000", "--background-secondary-alt: #000", "--titlebar-background: #000", "--status-bar-background: #000"]);
+  add(H + " .app-container, " + H + " .horizontal-main-container", ["background: #000 !important"]);
+  add(H + " .status-bar", ["display: none !important"]);
+  /* Left drawer: no divider between the shortcuts and the list */
+  add(H + " .workspace-drawer.mod-left .nn-shortcuts-resize-handle", ["display: none !important"]);
+  /* Left drawer: the Notebook Navigator button is solid blue, black type */
+  add(H + " .workspace-drawer.mod-left .workspace-drawer-tab-select", ["background: transparent !important", "border-radius: 999px !important"]);
+  add(H + " .workspace-drawer.mod-left .workspace-drawer-tab-select .workspace-tab-header-inner", [
+    "background: var(--ms-blue) !important", "background-color: var(--ms-blue) !important", "border-radius: 999px !important", "box-shadow: none !important", "color: #000 !important", "--icon-color: #000"
+  ]);
+  add(H + " .workspace-drawer.mod-left .workspace-drawer-tab-select .workspace-tab-header-inner-title, " + H + " .workspace-drawer.mod-left .workspace-drawer-tab-select svg", ["color: #000 !important"]);
+  /* Right drawer: the selector pill keeps its blue (outline, icon and type), and so does the sync indicator */
+  add(H + " .workspace-drawer.mod-right .workspace-drawer-tab-select .workspace-tab-header-inner", [
+    "background: #000 !important", "box-shadow: inset 0 0 0 1.5px var(--ms-blue) !important", "color: var(--ms-blue) !important", "--icon-color: var(--ms-blue)"
+  ]);
+  add(H + " .workspace-drawer.mod-right .workspace-drawer-tab-select .workspace-tab-header-inner-title, " + H + " .workspace-drawer.mod-right .workspace-drawer-tab-select svg", ["color: var(--ms-blue) !important"]);
+  add(H + " .workspace-drawer.mod-right .workspace-drawer-header-icon", ["background: #000 !important", "color: var(--ms-blue) !important", "--icon-color: var(--ms-blue)"]);
+  add(H + " .workspace-drawer.mod-right .workspace-drawer-header-icon svg", ["color: var(--ms-blue) !important", "stroke: var(--ms-blue) !important"]);
+  add(H + " .workspace-drawer.mod-right .sync-status-icon.mod-working, " + H + " .workspace-drawer.mod-right .sync-status-icon.mod-working svg", ["color: var(--ms-salmon) !important", "stroke: var(--ms-salmon) !important"]);
+
+  /* The band: the main LCARS plugin's desktop frame draws a full-size slate layer (::after) over the root split, and it shows wherever the note's content does not reach (under the bars, above the formatting toolbar, along the right edge). Not wanted on the phone. */
+  add(H + " .workspace-split.mod-root::before, " + H + " .workspace-split.mod-root::after", ["display: none !important", "background: none !important", "content: none !important"]);
+  add(H + " .workspace-split.mod-vertical.mod-root", ["padding: 0 !important"]);
+  add(H + " .workspace, " + H + " .workspace-split.mod-root, " + H + " .mod-root .workspace-tabs, " + H + " .mod-root .workspace-tab-container", ["background: transparent !important"]);
+  /* Pop-up menus: gray, with light type and blue icons */
+  add(H + " .menu", ["background: var(--ms-frame) !important", "border: 0 !important", "box-shadow: none !important"]);
+  add(H + " .menu-item", [
+    "background: var(--ms-key) !important", "background-color: var(--ms-key) !important", "border-radius: 999px !important",
+    "margin: 4px 8px !important", "color: var(--ms-text) !important", "box-shadow: none !important"
+  ]);
+  add(H + " .menu-item-title, " + H + " .menu-item-icon, " + H + " .menu-item-icon svg, " + H + " .menu-item-icon .svg-icon", [
+    "background: transparent !important", "box-shadow: none !important"
+  ]);
+  add(H + " .menu-item-title", ["color: var(--ms-text) !important"]);
+  add(H + " .menu-item-icon, " + H + " .menu-item-icon svg", ["color: var(--ms-blue) !important", "--icon-color: var(--ms-blue)"]);
+  add(H + " .menu-separator", ["display: none !important"]);
+  add(H + " .menu-item:active, " + H + " .menu-item.selected, " + H + " .menu-item.is-selected", ["background: var(--ms-bar) !important", "background-color: var(--ms-bar) !important"]);
+  return L.join("\n");
+})();
+
+// ─────────────────────────────────────────────────────────────
+// Drawer lines (phone, left drawer): one or two lines of animated readout
+// in the LCARS manner, above Notebook Navigator's toolbar or at the bottom
+// of the drawer. Spec: the LCARS Interface project, "LCARS Mobile – Build
+// Spec" and the Lines v3 mock. Phone only; the desktop has the banner.
+// Data: the Sync plugin's status (event "status-change" and getStatus()),
+// the main LCARS plugin's statuses and the events file the Sandbox loads,
+// the stardate variable, vault counts. GEO, BIO and MET, the shuttle and
+// the away team are placeholders until real measures are chosen.
+// ─────────────────────────────────────────────────────────────
+var LN_ID = "lcars-lines-style";
+var LN_ORDER = [
+  ["link", "Data link"], ["net", "Data link, connection"], ["subspace", "Subspace trace (link speed)"], ["casc", "Data cascade"],
+  ["power", "Power reserves"], ["endurance", "Power endurance"], ["transfer", "Power transfer (charging)"], ["systems", "Systems status"],
+  ["scan", "Condition scan"], ["rotate", "Rotating readout"],
+  ["lights", "Condition with lights"], ["trace", "Pulse trace"], ["triA", "Tricorder, adjacent"], ["triS", "Tricorder, stacked"],
+  ["sweep", "Sweep scanner"], ["inertial", "Inertial dampers"],
+  ["shuttle", "Shuttlecraft status"], ["away", "Away team life signs"]
+];
+var LN_DEFAULTS = { on: true, slots: [{ on: true, picks: ["link"], cycle: "off", seconds: 4 }, { on: true, picks: ["triA"], cycle: "off", seconds: 4 }], spacer: true, slot: "off", slotW: "half", adj: "boxes", adjSeconds: 8, dot: true, pos: "top", bg: "black", short: "" };
+function lnIsTri(k) { return k === "triA" || k === "triS"; }
+var LN_STATES = {
+  synced:        { term: "ONLINE",        cls: "st-nominal", casc: "c-nominal", hb: "hb-nominal", dot: "d-nominal", rank: 0 },
+  syncing:       { term: "ACTIVE",        cls: "st-active",  casc: "c-active",  hb: "hb-active", dot: "d-active", rank: 0 },
+  connecting:    { term: "SEARCHING",     cls: "st-search",  casc: "c-search",  hb: "hb-search", dot: "d-search", rank: 1 },
+  uninitialized: { term: "UNINITIALIZED", cls: "st-uninit",  casc: "c-none",    hb: "hb-none", dot: "d-uninit", rank: 1 },
+  paused:        { term: "STANDBY",       cls: "st-standby", casc: "c-standby", hb: "hb-standby", dot: "d-standby", rank: 0 },
+  offline:       { term: "OFFLINE",       cls: "st-offline", casc: "c-offline", hb: "hb-offline", dot: "d-low", rank: 1 },
+  disconnected:  { term: "SIGNAL LOST",   cls: "st-lost",    casc: "c-lost",    hb: "hb-lost", dot: "d-lost", rank: 2 },
+  error:         { term: "ERROR",         cls: "st-error",   casc: "c-error",   hb: "hb-error", dot: "d-error", rank: 2 },
+  none:          { term: null,            cls: "st-conf",    casc: "c-none",    hb: "hb-none", dot: "d-none", rank: -1 }
+};
+function lnEsc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;" }[c]; }); }
+
+var LN_CSS = (function () {
+  var u = function (n) { return "calc(" + n + " * var(--ms-u))"; };
+  var B = "body.is-phone.lcars-mobile-slab .lcars-ml", L = [];
+  var add = function (sel, decls) { L.push(sel + " {\n" + decls.map(function (d) { return "  " + d + ";"; }).join("\n") + "\n}"); };
+  add(B, ["--l-blue: #37a6d1", "--l-blue2: #41c4f7", "--l-navy: #1c3c55", "--l-dimred: #8f3a32", "--l-red: #ff6753", "--l-salmon: #ff977b", "--l-cap: #9ea5ba", "--l-bar: #6d748c",
+    "--l-geo: #ff977b", "--l-bio: #a98fe0", "--l-met: #41c4f7", "--l-orange: #ff9d3c",
+    "flex: none", "box-sizing: border-box", "display: flex", "flex-direction: column", "width: 100%", "position: relative", "z-index: 1"]);
+  add(B + ".is-top", ["margin: " + u(20) + " 0 " + u(8) + " 0"]);
+  add(B + ".is-bottom", ["margin: " + u(8) + " 0 0 0"]);
+  add(B + " .l-strip", [
+    "--l-empty: #232a3a", "--l-rule: #2b2f3a", "height: " + u(24), "min-height: 20px", "background: #000", "display: flex", "align-items: center", "padding: 0 " + u(10), "box-sizing: border-box",
+    "font-family: var(--lcars-heading-font, 'Antonio', 'Arial Narrow', sans-serif)", "font-size: " + u(13), "letter-spacing: 0.14em", "text-transform: uppercase", "white-space: nowrap", "overflow: hidden", "position: relative", "color: var(--l-cap)", "contain: layout paint"
+  ]);
+  add(B + ".is-frame .l-strip", ["background: transparent", "--l-empty: rgba(0, 0, 0, 0.28)", "--l-rule: rgba(255, 255, 255, 0.14)"]);
+  add(B + ".has-gap .l-strip:first-child", ["margin-bottom: var(--ms-gap)"]);
+  add(B + " .l-lab", ["color: var(--l-cap)"]);
+  add(B + " .l-val", ["color: var(--l-salmon)"]);
+  add(B + " .l-grow", ["flex: 1"]);
+  add(B + " .l-tap", ["position: absolute", "right: " + u(6), "color: var(--l-bar)", "font-size: " + u(10)]);
+  /* link states: blue is good */
+  add(B + " .st", ["display: inline-block"]);
+  add(B + " .st-nominal", ["color: var(--l-blue2)", "text-shadow: 0 0 6px rgba(65, 196, 247, 0.55)", "animation: lnGlow 4.2s ease-in-out infinite"]);
+  add(B + " .st-active", ["color: var(--l-blue2)", "animation: lnFlash 0.8s steps(2, end) infinite"]);
+  add(B + " .st-search", ["background: linear-gradient(90deg, #b5532f 35%, #ffd2b8 50%, #b5532f 65%) 0 0 / 250% 100%", "-webkit-background-clip: text", "background-clip: text", "color: transparent", "animation: lnSweep 2.4s steps(16, end) infinite"]);
+  add(B + " .st-standby", ["color: var(--l-blue)"]);
+  add(B + " .st-lost", ["color: var(--l-dimred)"]);
+  add(B + " .st-error", ["color: var(--l-red)", "animation: lnFlash 1.3s steps(2, end) infinite"]);
+  add(B + " .st-conf", ["color: var(--l-cap)", "border-bottom: 1px dotted var(--l-bar)"]);
+  add(B + " .st-uninit", ["color: var(--l-cap)"]);
+  add(B + " .st-offline, " + B + " .st-low", ["color: var(--l-orange)"]);
+  add(B + " .l-b", ["color: var(--l-blue2)"]);
+  add(B + " .l-o", ["color: var(--l-orange)"]);
+  add(B + " .l-r", ["color: var(--l-red)"]);
+  add(B + " .l-dim", ["color: var(--l-bar)"]);
+  L.push("@keyframes lnGlow { 0%, 100% { opacity: 0.7; } 50% { opacity: 1; } }");
+  L.push("@keyframes lnFlash { 0% { opacity: 1; } 50% { opacity: 0.15; } }");
+  L.push("@keyframes lnSweep { from { background-position: 100% 0; } to { background-position: 0 0; } }");
+  L.push("@keyframes lnScroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }");
+  L.push("@keyframes lnBreathe { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }");
+  L.push("@keyframes lnCascO { 0%, 100% { opacity: 0.12; } 10% { opacity: 1; } 30% { opacity: 0.5; } 50% { opacity: 0.12; } }");
+  L.push("@keyframes lnPing { from { transform: translateX(0); } to { transform: translateX(354%); } }");
+  L.push("@keyframes lnChase { 0%, 100% { opacity: 0.25; } 12% { opacity: 1; } 40% { opacity: 0.25; } }");
+  L.push("@keyframes lnIn { from { opacity: 0; transform: translateY(40%); } to { opacity: 1; transform: none; } }");
+  /* cascades */
+  add(B + " .l-casc", ["display: flex", "gap: 2px", "align-items: center", "flex: 1", "justify-content: flex-end"]);
+  add(B + " .l-casc b", ["display: block", "width: " + u(5), "height: " + u(12), "background: var(--l-navy)"]);
+  add(B + " .c-nominal", ["animation: lnBreathe 4.2s ease-in-out infinite"]);
+  add(B + " .c-nominal b", ["background: #2a7193"]);
+  add(B + " .c-active b", ["background: var(--l-blue2)", "animation: lnCascO 1.1s linear infinite"]);
+  add(B + " .c-standby b", ["background: #2a7193", "opacity: 0.8"]);
+  add(B + " .c-lost b", ["background: #4a2320"]);
+  add(B + " .c-error b", ["background: var(--l-red)", "animation: lnFlash 1.3s steps(2, end) infinite"]);
+  add(B + " .c-none b", ["background: #3a4054"]);
+  add(B + " .c-search", ["position: relative", "overflow: hidden"]);
+  add(B + " .c-search b", ["background: #5a2e1e"]);
+  add(B + " .c-search::after", ['content: ""', "position: absolute", "top: 0", "bottom: 0", "left: 0", "width: 22%", "background: linear-gradient(90deg, transparent, #b5532f, var(--l-salmon), #b5532f, transparent)", "animation: lnPing 1.7s ease-in-out infinite alternate"]);
+  /* condition scan, lights, trace, rotating */
+  add(B + " .l-scan", ["background: linear-gradient(90deg, color-mix(in srgb, var(--l-c) 55%, #000) 35%, #fff 50%, color-mix(in srgb, var(--l-c) 55%, #000) 65%) 0 0 / 250% 100%", "-webkit-background-clip: text", "background-clip: text", "color: transparent", "animation: lnSweep 3.2s steps(20, end) infinite"]);
+  add(B + " .l-cond", ["color: var(--l-c)"]);
+  add(B + " .l-lights", ["display: flex", "gap: 3px", "margin-left: auto"]);
+  add(B + " .l-lights b", ["display: block", "width: " + u(12), "height: " + u(10), "background: var(--l-c)", "animation: lnChase 2s linear infinite"]);
+  add(B + " .l-trace", ["position: absolute", "left: 0", "right: 0", "top: 0", "bottom: 0", "overflow: hidden"]);
+  add(B + " .l-trace svg, " + B + " .l-hb svg", ["position: absolute", "left: 0", "top: 2px", "width: 200%", "height: 80%", "animation: lnScroll 3.2s linear infinite"]);
+  add(B + " .l-trace path, " + B + " .l-hb path", ["stroke: currentColor", "fill: none", "stroke-width: 1.5"]);
+  add(B + " .l-trace", ["color: var(--l-blue)"]);
+  add(B + " .l-rot", ["display: inline-block", "animation: lnIn 0.45s ease-out"]);
+  /* tricorder */
+  add(B + " .gl", ["color: var(--l-geo)"]);
+  add(B + " .bl", ["color: var(--l-bio)"]);
+  add(B + " .ml", ["color: var(--l-met)"]);
+  add(B + " .l-seg", ["display: flex", "gap: 1px", "flex: 1", "min-width: 0"]);
+  add(B + " .l-seg u", ["display: block", "flex: 1", "background: var(--l-empty)", "text-decoration: none"]);
+  add(B + " .l-seg.g u.on", ["background: var(--l-geo)"]);
+  add(B + " .l-seg.b u.on", ["background: var(--l-bio)"]);
+  add(B + " .l-seg.m u.on", ["background: var(--l-met)"]);
+  add(B + " .l-tri", ["display: flex", "align-items: center", "width: 100%", "height: 100%", "gap: " + u(8)]);
+  add(B + " .l-main", ["flex: 1 1 0", "min-width: 0", "display: flex", "align-items: center", "height: 100%"]);
+  add(B + " .l-slot", ["flex: none", "display: flex", "align-items: center", "height: 70%", "border-left: 1px solid var(--l-rule)", "padding-left: " + u(8), "box-sizing: border-box", "overflow: hidden", "position: relative"]);
+  add(B + " .l-slot.half", ["width: 50%"]);
+  add(B + " .l-slot.two3", ["width: 66.67%"]);
+  add(B + " .l-adj", ["display: flex", "width: 100%", "gap: " + u(8), "align-items: center"]);
+  add(B + " .l-adj .g", ["flex: 1 1 0", "display: flex", "align-items: center", "gap: " + u(4), "min-width: 0"]);
+  add(B + " .l-adj .l-seg u", ["height: " + u(11)]);
+  add(B + " .l-stk", ["display: flex", "align-items: center", "gap: " + u(7), "width: 100%", "height: 100%"]);
+  add(B + " .l-stk .labs", ["display: flex", "flex-direction: column", "justify-content: center", "font-size: " + u(8), "line-height: " + u(8), "letter-spacing: 0.14em", "width: " + u(22), "flex: none"]);
+  add(B + " .l-stk .rows", ["flex: 1", "display: flex", "flex-direction: column", "justify-content: center", "gap: 1px", "min-width: 0"]);
+  add(B + " .l-stk .l-seg u", ["height: " + u(6)]);
+  add(B + " .l-eq", ["display: flex", "width: 100%", "height: 100%", "gap: " + u(8), "align-items: center"]);
+  add(B + " .l-eq .g", ["flex: 1 1 0", "display: flex", "align-items: flex-end", "gap: 3px", "height: 80%", "min-width: 0"]);
+  add(B + " .l-eq .g > span", ["font-size: " + u(10), "letter-spacing: 0.08em", "align-self: center"]);
+  add(B + " .l-eq .cols2", ["flex: 1", "display: flex", "align-items: flex-end", "gap: 1px", "height: 90%"]);
+  add(B + " .cols2 b", ["display: block", "flex: 1", "height: 100%", "transform-origin: 50% 100%", "transform: scaleY(0.4)", "transition: transform 0.6s ease-out"]);
+  add(B + " .l-adj .cols2", ["flex: 1", "display: flex", "align-items: flex-end", "gap: 1px", "height: " + u(18), "min-width: 0"]);
+  add(B + " .cols2 .c1", ["background: var(--l-geo)"]);
+  add(B + " .cols2 .c2", ["background: var(--l-bio)"]);
+  add(B + " .cols2 .c3", ["background: var(--l-met)"]);
+  add(B + " .l-st-txt", ["display: flex", "align-items: center", "gap: " + u(5), "font-size: " + u(11), "letter-spacing: 0.1em"]);
+  add(B + " .l-ic svg", ["width: " + u(13), "height: " + u(13), "display: block"]);
+  add(B + " .l-hb", ["position: relative", "width: 100%", "height: " + u(16), "overflow: hidden", "color: var(--l-blue2)"]);
+  add(B + " .hb-nominal", ["color: var(--l-blue2)"]);
+  add(B + " .hb-active", ["color: var(--l-blue2)", "animation: lnFlash 0.8s steps(2, end) infinite"]);
+  add(B + " .hb-search", ["color: var(--l-salmon)"]);
+  add(B + " .hb-standby", ["color: var(--l-blue)"]);
+  add(B + " .hb-standby svg, " + B + " .hb-lost svg, " + B + " .hb-none svg", ["animation: none"]);
+  add(B + " .hb-lost", ["color: var(--l-dimred)"]);
+  add(B + " .hb-error", ["color: var(--l-red)", "animation: lnFlash 1.3s steps(2, end) infinite"]);
+  add(B + " .hb-none", ["color: #3a4054"]);
+  /* the status circle left of the data link text */
+  add(B + " .l-d", ["flex: none", "width: " + u(15), "display: flex", "align-items: center"]);
+  add(B + " .l-dot", ["display: inline-block", "flex: none", "width: " + u(7), "height: " + u(7), "border-radius: 50%", "background: var(--l-blue)"]);
+  add(B + " .l-dot.d-low", ["background: var(--l-orange)"]);
+  add(B + " .l-dot.d-uninit", ["background: var(--l-bar)"]);
+  add(B + ".no-dot .l-d", ["display: none"]);
+  add(B + " .l-strip.hd .l-trace", ["left: " + u(25)]);
+  add(B + " .c-offline b", ["background: #6b4a1e"]);
+  add(B + " .hb-offline", ["color: var(--l-orange)"]);
+  add(B + " .hb-offline svg", ["animation: none"]);
+  /* power: gauge cells and the charging cascade */
+  add(B + " .l-pg", ["display: flex", "gap: 2px", "flex: none", "margin-right: " + u(10)]);
+  add(B + " .l-pg u", ["display: block", "width: " + u(12), "height: " + u(11), "background: var(--l-empty)", "text-decoration: none"]);
+  add(B + " .l-pg u.on", ["background: var(--l-blue2)"]);
+  add(B + " .l-pg.warn u.on", ["background: var(--l-orange)"]);
+  add(B + " .l-pg.crit u.on", ["background: var(--l-red)"]);
+  /* sweep scanner: transform and opacity only */
+  add(B + " .l-sw", ["position: relative", "flex: 1", "min-width: 0", "height: " + u(18), "overflow: hidden", "margin-right: " + u(10), "background: repeating-linear-gradient(90deg, var(--l-rule) 0 1px, transparent 1px 14px)"]);
+  add(B + " .l-sw::after", ['content: ""', "position: absolute", "top: 0", "bottom: 0", "left: 0", "width: 26px", "background: linear-gradient(90deg, transparent, rgba(65, 196, 247, 0.55))", "border-right: 1.5px solid var(--l-blue2)", "transform: translateX(-26px)", "animation: lnSw 3.2s linear infinite"]);
+  add(B + " .l-sw i", ["position: absolute", "width: 5px", "height: 5px", "border-radius: 50%", "opacity: 0", "animation: lnBlip 3.2s linear infinite"]);
+  L.push("@keyframes lnSw { from { transform: translateX(-26px); } to { transform: translateX(var(--sw-w, 300px)); } }");
+  L.push("@keyframes lnBlip { 0%, 40% { opacity: 0; } 50% { opacity: 1; } 100% { opacity: 0; } }");
+  /* inertial dampers: horizon and bubble */
+  add(B + " .l-hz", ["position: relative", "flex: none", "width: " + u(44), "height: " + u(18), "border: 1.5px solid var(--l-bar)", "border-radius: 999px", "overflow: hidden", "margin-right: " + u(10), "box-sizing: border-box"]);
+  add(B + " .l-hz i", ["position: absolute", "left: -20%", "right: -20%", "top: 50%", "height: 1.5px", "background: var(--l-blue2)", "will-change: transform"]);
+  add(B + " .l-hz.sim i", ["animation: lnTilt 5s ease-in-out infinite"]);
+  add(B + " .l-hz.sim u", ["animation: lnBubble 5s ease-in-out infinite"]);
+  L.push("@keyframes lnTilt { 0%, 100% { transform: rotate(-8deg) translateY(-2px); } 50% { transform: rotate(8deg) translateY(2px); } }");
+  L.push("@keyframes lnBubble { 0%, 100% { transform: translate(-14px, -2px); } 50% { transform: translate(14px, 2px); } }");
+  add(B + " .l-hz u", ["position: absolute", "left: 50%", "top: 50%", "width: 6px", "height: 6px", "margin: -3px 0 0 -3px", "border-radius: 50%", "background: var(--l-salmon)", "text-decoration: none", "will-change: transform"]);
+  add(B + " .l-dot.d-nominal", ["background: var(--l-blue2)", "box-shadow: 0 0 6px rgba(65, 196, 247, 0.7)", "animation: lnGlow 4.2s ease-in-out infinite"]);
+  add(B + " .l-dot.d-active", ["background: var(--l-blue2)", "animation: lnFlash 0.8s steps(2, end) infinite"]);
+  add(B + " .l-dot.d-search", ["background: var(--l-salmon)", "animation: lnFlash 1.1s steps(2, end) infinite"]);
+  add(B + " .l-dot.d-standby", ["background: var(--l-blue)"]);
+  add(B + " .l-dot.d-lost", ["background: var(--l-dimred)"]);
+  add(B + " .l-dot.d-error", ["background: var(--l-red)", "animation: lnFlash 1.3s steps(2, end) infinite"]);
+  add(B + " .l-dot.d-none", ["background: #3a4054"]);
+  /* sparkline graph (adjacent tricorder) */
+  add(B + " .l-spark", ["flex: 1", "min-width: 0", "height: " + u(18), "display: block", "overflow: hidden", "position: relative"]);
+  add(B + " .l-spark svg", ["position: absolute", "left: 0", "top: 0", "width: 200%", "height: 100%", "animation: lnScroll 10s linear infinite"]);
+  add(B + " .l-spark polyline", ["fill: none", "stroke-width: 1.4", "vector-effect: non-scaling-stroke", "stroke-linejoin: round"]);
+  add(B + " .l-spark.g polyline", ["stroke: var(--l-geo)"]);
+  add(B + " .l-spark.b polyline", ["stroke: var(--l-bio)"]);
+  add(B + " .l-spark.m polyline", ["stroke: var(--l-met)"]);
+  add(B + " .l-spark.n polyline", ["stroke: var(--l-blue2)"]);
+  add(B + " .l-spark.n", ["margin: 0 " + u(6) + " 0 0"]);
+  /* shuttle, away team */
+  add(B + " .l-shut, " + B + " .l-away", ["display: flex", "align-items: center", "gap: " + u(7), "width: 100%"]);
+  add(B + " .l-sg", ["flex: none", "width: " + u(36), "display: flex", "gap: 1px"]);
+  add(B + " .l-sg u", ["display: block", "flex: 1", "height: " + u(11), "background: var(--l-empty)"]);
+  add(B + " .l-sg u.on", ["background: var(--l-blue2)"]);
+  add(B + " .l-life", ["width: " + u(26), "height: " + u(16), "overflow: hidden", "position: relative", "flex: none", "background: rgba(0, 0, 0, 0.4)"]);
+  add(B + " .l-life svg", ["position: absolute", "left: 0", "top: 0", "width: 200%", "height: 100%", "animation: lnScroll 1.8s linear infinite"]);
+  add(B + " .l-life.hurt svg", ["animation-duration: 0.7s"]);
+  add(B + " .l-life.flat svg", ["animation: none"]);
+  add(B + " .l-life path", ["fill: none", "stroke-width: 1.3"]);
+  /* standby: the main plugin's idle class pauses the motion */
+  add("body.lcars-idle .lcars-ml *", ["animation-play-state: paused !important"]);
+  L.push("@media (prefers-reduced-motion: reduce) { .lcars-ml * { animation: none !important; transition: none !important; } }");
+  return L.join("\n");
+})();
+
+var LN_PATH = '<svg viewBox="0 0 120 16" preserveAspectRatio="none"><path d="M0 8 H14 L17 8 L20 2 L24 14 L27 8 H44 L47 8 L50 5 L53 11 L56 8 H60 M60 8 H74 L77 8 L80 2 L84 14 L87 8 H104 L107 8 L110 5 L113 11 L116 8 H120"/></svg>';
+var LN_PULSE = '<svg viewBox="0 0 52 16" preserveAspectRatio="none"><path style="stroke:COLOR" d="M0 8 H8 L10 8 L12 2 L15 14 L17 8 H26 M26 8 H34 L36 8 L38 2 L41 14 L43 8 H52"/></svg>';
+var LN_FLAT = '<svg viewBox="0 0 52 16" preserveAspectRatio="none"><path style="stroke:COLOR" d="M0 8 H52"/></svg>';
+
+// Everything the lines read, with the plugin passed in.
+function lnSyncState(app) {
+  try { return lnSyncStateRaw(app); } catch (e) { return "none"; }
+}
+function lnSyncStateRaw(app) {
+  var p = app.internalPlugins && app.internalPlugins.getPluginById && app.internalPlugins.getPluginById("sync");
+  if (!p || !p.enabled || !p.instance || !p.instance.vaultId) return "none";
+  var i = p.instance, st;
+  try { st = i.getStatus(); } catch (e) { return "none"; }
+  // The phone has no network at all: shown as OFFLINE, apart from the server being unreachable (SIGNAL LOST).
+  if (typeof navigator !== "undefined" && navigator.onLine === false) return "offline";
+  if (st === "uninitialized") return i.syncStatus === "Connecting to server" ? "connecting" : "uninitialized";
+  return LN_STATES[st] && st !== "connecting" && st !== "offline" ? st : "none";
+}
+function lnShip(pl) {
+  var s = (pl.ms.lines.short || "").trim();
+  if (s) return s;
+  var full = (pl.settings && pl.settings.shipName) || "";
+  return String(full).replace(/^\s*(U\.?S\.?S\.?|I\.?S\.?S\.?)\s+/i, "").trim() || "Ship";
+}
+function lnCondition(pl) {
+  var out = { label: "NOMINAL", color: "var(--l-blue2)", raised: false };
+  try {
+    var api = window.lcarsObsidian && window.lcarsObsidian.api, act = api ? api.statuses.active() : [];
+    if (act.length) {
+      var id = act[0].id, list = (pl.settings && pl.settings.alerts && pl.settings.alerts.statuses) || [];
+      var st = list.filter(function (x) { return x.id === id; })[0];
+      out.label = String((st && st.label) || id).toUpperCase(); out.color = (st && st.color) || "var(--l-salmon)"; out.raised = true;
+    }
+  } catch (e) { /* the main plugin is not running */ }
+  return out;
+}
+function lnStardate() {
+  var v = getComputedStyle(document.body).getPropertyValue("--padd-stardate").replace(/["']/g, "").trim();
+  if (v) return v;
+  try { return window.lcarsStardateString ? window.lcarsStardateString() : "—"; } catch (e) { return "—"; }
+}
+function lnNextEvent(pl) {
+  var now = Date.now(), best = null;
+  (pl.events || []).forEach(function (e) {
+    var s = Date.parse(e.start);
+    if (!isFinite(s) || s <= now || e.allDay) return;
+    if (!best || s < best.s) best = { s: s, t: String(e.title || "Event") };
+  });
+  if (!best) return "NO EVENTS DUE";
+  var d = new Date(best.s);
+  return "NEXT " + pad2(d.getHours()) + ":" + pad2(d.getMinutes()) + " " + best.t.toUpperCase().slice(0, 14);
+}
+function lnCounts(pl) {
+  var now = Date.now();
+  if (!pl._cnt || now - pl._cnt.at > 60000) {
+    var files = pl.app.vault.getFiles().length, folders = pl.app.vault.getAllLoadedFiles().filter(function (f) { return f.children; }).length;
+    pl._cnt = { at: now, files: files, folders: folders };
+  }
+  return pl._cnt;
+}
+
+// Builders (HTML strings; text that comes from the vault is escaped).
+function lnSeg(n, cls) { var u = ""; for (var i = 0; i < n; i++) u += "<u></u>"; return '<span class="l-seg ' + cls + '" data-seg="' + n + '">' + u + "</span>"; }
+function lnCols(c) { var h = '<span class="cols2">'; for (var i = 0; i < 5; i++) h += '<b class="' + c + '" data-eq="1"></b>'; return h + "</span>"; }
+function lnCasc(s, n) { var d = LN_STATES[s], b = ""; for (var i = 0; i < n; i++) b += '<b style="animation-delay:' + (i * 0.09).toFixed(2) + 's"></b>'; return '<span class="l-casc ' + d.casc + '" data-casc="' + s + '" data-sd="casc">' + b + "</span>"; }
+function lnDot(pl, s) { return pl.ms.lines.dot === false ? "" : '<span class="l-d"><span class="l-dot ' + LN_STATES[s].dot + '" data-sd="dot"></span></span>'; }
+function lnDotX(pl, cls, style) { return pl.ms.lines.dot === false ? "" : '<span class="l-d"><span class="l-dot ' + (cls || "") + '"' + (style ? ' style="' + style + '"' : "") + "></span></span>"; }
+
+// Power (battery) and connection, from the browser. x.pw: {pct, ch, st, t} or null; x.net: {online, type, eff, dl}.
+var LN_PW = {
+  nom:      { term: "NOMINAL",  cls: "st-nominal", dot: "d-nominal", gauge: "",     rank: 0 },
+  charging: { term: "CHARGING", cls: "st-active",  dot: "d-active",  gauge: "",     rank: 0 },
+  low:      { term: "LOW",      cls: "st-low",     dot: "d-low",     gauge: "warn", rank: 1 },
+  crit:     { term: "CRITICAL", cls: "st-error",   dot: "d-error",   gauge: "crit", rank: 2 }
+};
+function lnFmtT(sec) {
+  if (!isFinite(sec) || sec <= 0) return "";
+  var h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60);
+  return h + "H " + (m < 10 ? "0" : "") + m + "M";
+}
+function lnPwRead(b) {
+  if (!b) return null;
+  var l = b.level, ch = !!b.charging;
+  return { pct: Math.round(l * 100), l: l, ch: ch, st: ch ? "charging" : l < 0.15 ? "crit" : l < 0.30 ? "low" : "nom", t: ch ? b.chargingTime : b.dischargingTime };
+}
+function lnNetRead() {
+  var c = navigator.connection || navigator.mozConnection || navigator.webkitConnection, t = c && c.type ? String(c.type) : "";
+  var names = { wifi: "WI-FI", cellular: "CELL", ethernet: "ETHERNET", bluetooth: "BLUETOOTH", none: "NONE" };
+  return { online: navigator.onLine !== false, type: names[t] || "", eff: c && c.effectiveType ? String(c.effectiveType).toUpperCase() : "", dl: c && isFinite(c.downlink) ? c.downlink : null };
+}
+// One line of speed history as a polyline that repeats once, so the CSS scroll loops without a jump.
+function lnHistPts(h) {
+  var v = h.length ? h.slice() : [0, 0], lo = Math.min.apply(null, v), hi = Math.max.apply(null, v), n = v.length, i;
+  while (v.length < 18) v.unshift(v[0]);
+  n = v.length; v[n - 1] = v[0];
+  var y = function (x) { return hi - lo < 0.05 ? 6 : (10.5 - ((x - lo) / (hi - lo)) * 9).toFixed(1); };
+  var one = v.map(function (x, k) { return (k * 40 / (n - 1)).toFixed(1) + "," + y(x); });
+  var two = v.map(function (x, k) { return (40 + k * 40 / (n - 1)).toFixed(1) + "," + y(x); });
+  return one.concat(two).join(" ");
+}
+function lnCascPlain(cls, n) { var b = ""; for (var i = 0; i < n; i++) b += '<b style="animation-delay:' + (i * 0.09).toFixed(2) + 's"></b>'; return '<span class="l-casc ' + cls + '">' + b + "</span>"; }
+function lnSpark(cls) { return '<span class="l-spark ' + cls + '"><svg viewBox="0 0 80 12" preserveAspectRatio="none" data-spark="1"><polyline points=""/></svg></span>'; }
+var LN_KINDS = ["boxes", "equalizer", "spark"];
+function lnGraph(kind, c, n) { return kind === "equalizer" ? lnCols(n) : kind === "spark" ? lnSpark(c) : lnSeg(6, c); }
+function lnAdjMain(pl, shift) {
+  var st = pl.ms.lines.adj || "boxes", k;
+  if (st === "mixed") k = LN_KINDS;
+  else if (st === "rotate") { shift = shift || 0; k = [LN_KINDS[shift % 3], LN_KINDS[(shift + 1) % 3], LN_KINDS[(shift + 2) % 3]]; }
+  else k = [st, st, st];
+  return '<div class="l-adj" data-geo="1" data-adj="' + st + '"><span class="g"><span class="gl">GEO</span>' + lnGraph(k[0], "g", "c1") + '</span><span class="g"><span class="bl">BIO</span>' + lnGraph(k[1], "b", "c2") + '</span><span class="g"><span class="ml">MET</span>' + lnGraph(k[2], "m", "c3") + "</span></div>";
+}
+function lnSlot(pl, s) {
+  var L = pl.ms.lines;
+  if (L.slot === "off") return "";
+  var d = LN_STATES[s], w = L.slotW === "two3" ? "two3" : "half", inner;
+  if (L.slot === "text") inner = '<span class="l-st-txt"><span class="l-ic" data-ic="satellite-dish"></span><span class="st ' + d.cls + '" data-sd="st">' + (d.term ? "[" + d.term + "]" : "CONFIGURE") + "</span></span>";
+  else if (L.slot === "visual") inner = lnCasc(s, w === "two3" ? 30 : 22);
+  else inner = '<span class="l-hb ' + d.hb + '" data-sd="hb">' + LN_PATH + "</span>";
+  return '<div class="l-slot ' + w + '">' + inner + "</div>";
+}
+function lnTri(pl, main, s) { return '<div class="l-tri"><div class="l-main">' + main + "</div>" + lnSlot(pl, s) + "</div>"; }
+// The dot at the left of every line: its color says what that line is reporting.
+function lnDotFor(pl, key, s, x) {
+  var c, w;
+  switch (key) {
+    // Only lines that show the connection or sync state themselves carry the link-state dot.
+    case "link": case "net": case "subspace": case "casc": return lnDot(pl, s);
+    case "power": case "endurance": case "transfer": return x.pw ? lnDotX(pl, LN_PW[x.pw.st].dot) : lnDotX(pl, "d-none");
+    case "systems": w = lnSystemsRank(s, x); return lnDotX(pl, w === 2 ? "d-error" : w === 1 ? "d-low" : "d-nominal");
+    case "scan": case "lights": c = lnCondition(pl); return lnDotX(pl, "", "background:" + c.color);
+    default: return lnDotX(pl, "d-standby");
+  }
+}
+// Worst state among link, power and sync: 0 good, 1 warning, 2 failing.
+function lnSystemsRank(s, x) {
+  var a = x.net && x.net.online === false ? 1 : 0, b = x.pw ? LN_PW[x.pw.st].rank : 0, c = Math.max(0, LN_STATES[s].rank);
+  return Math.max(a, b, c);
+}
+function lnLine(pl, key, s, x) {
+  var d = LN_STATES[s], c, p, n;
+  x = x || {};
+  switch (key) {
+    case "link":
+      return d.term ? '<span class="l-lab">Data link:&nbsp;</span><span class="l-val">' + lnEsc(lnShip(pl)) + '</span>&nbsp;<span class="st ' + d.cls + '" data-sd="st">[' + d.term + "]</span>" : '<span class="st ' + d.cls + '">Configure data link&nbsp;›</span>';
+    case "net":
+      n = x.net || lnNetRead();
+      if (!n.online) return '<span class="l-lab">Link:&nbsp;</span><span class="l-o">Offline</span>';
+      return '<span class="l-lab">Link:&nbsp;</span><span class="l-val">' + (n.type || "Online") + (n.eff ? " · " + n.eff : "") + "</span>" + (n.dl != null ? '<span class="l-grow"></span><span class="l-b">' + n.dl + " Mbps</span>" : "");
+    case "subspace":
+      n = x.net || lnNetRead();
+      return '<span class="l-lab">Subspace&nbsp;</span>' + (n.online ? '<span class="l-spark n"><svg viewBox="0 0 80 12" preserveAspectRatio="none" style="animation-duration:14s"><polyline points="' + lnHistPts(x.hist || []) + '"/></svg></span>' : '<span class="l-grow"></span>') + '<span class="' + (n.online ? "l-b" : "l-o") + '">&nbsp;' + (n.online ? (n.dl != null ? n.dl : "Online") : "Offline") + "</span>";
+    case "casc": return '<span class="l-lab">Data link&nbsp;</span>' + lnCasc(s, 24);
+    case "power":
+      p = x.pw; if (!p) return '<span class="l-lab">Reserves&nbsp;</span><span class="l-dim">Unavailable</span>';
+      c = Math.max(p.pct > 0 ? 1 : 0, Math.round(p.l * 6));
+      return '<span class="l-lab">Reserves&nbsp;</span><span class="l-pg ' + LN_PW[p.st].gauge + '">' + [0, 1, 2, 3, 4, 5].map(function (i) { return "<u" + (i < c ? ' class="on"' : "") + "></u>"; }).join("") + '</span><span class="l-val">' + p.pct + "%</span>";
+    case "endurance":
+      p = x.pw; if (!p) return '<span class="l-lab">Endurance&nbsp;</span><span class="l-dim">Unavailable</span>';
+      c = lnFmtT(p.t);
+      return '<span class="l-lab">' + (p.ch ? "Full in" : "Endurance") + '&nbsp;</span><span class="l-b">' + (c || "—") + '</span><span class="l-grow"></span><span class="st ' + LN_PW[p.st].cls + '">[' + LN_PW[p.st].term + "]</span>";
+    case "transfer":
+      p = x.pw; if (!p) return '<span class="l-lab">Transfer&nbsp;</span><span class="l-dim">Unavailable</span>';
+      return '<span class="l-lab">Transfer&nbsp;</span>' + lnCascPlain(p.ch ? "c-active" : "c-standby", 18) + '<span class="l-val">&nbsp;' + p.pct + '%</span>' + (p.ch ? '&nbsp;<span class="l-b">' + (lnFmtT(p.t) || "") + "</span>" : '&nbsp;<span class="l-dim">Idle</span>');
+    case "systems":
+      n = x.net || lnNetRead();
+      var wd = function (rank) { return rank === 2 ? "l-r" : rank === 1 ? "l-o" : "l-b"; };
+      return '<span class="l-lab">Systems&nbsp;</span><span class="' + wd(n.online ? 0 : 1) + '">Link</span>&nbsp;&nbsp;<span class="' + (x.pw && !x.simPw ? wd(LN_PW[x.pw.st].rank) : "l-dim") + '">Power</span>&nbsp;&nbsp;' + (s === "none" ? '<span class="l-dim">Sync</span>' : '<span class="' + wd(Math.max(0, d.rank)) + '">Sync</span>');
+    case "sweep":
+      n = x.contacts || 1;
+      var bl = ""; for (var k = 0; k < Math.min(8, n); k++) { var fr = ((k * 0.37 + 0.11) % 0.88) + 0.05; bl += '<i style="left:' + (fr * 100).toFixed(0) + "%;top:" + (3 + ((k * 7) % 10)) + "px;background:" + ["var(--l-geo)", "var(--l-bio)", "var(--l-blue2)"][k % 3] + ";animation-delay:" + (fr * 3.2 - 1.6).toFixed(2) + 's"></i>'; }
+      return '<span class="l-lab">Sweep&nbsp;</span><span class="l-sw" data-sw="1">' + bl + '</span><span class="l-b">' + n + (n === 1 ? " contact" : " contacts") + "</span>";
+    case "inertial":
+      return '<span class="l-lab">Inertial&nbsp;</span><span class="l-hz" data-inertial="1"><i></i><u></u></span><span class="l-val" data-in="p">P —</span>&nbsp;<span class="l-val" data-in="r">R —</span><span class="l-grow"></span><span class="st st-nominal" data-in="s">[STABLE]</span>';
+    case "scan": c = lnCondition(pl); return '<span class="l-scan" style="--l-c:' + c.color + '">' + (c.raised ? lnEsc(c.label) : "Systems nominal") + " · all decks</span>";
+    case "rotate": return '<span class="l-lab">&#9656;&nbsp;</span><span class="l-rot" data-rot="1"></span>';
+    case "lights": c = lnCondition(pl); var b = ""; for (var i = 0; i < 9; i++) b += '<b style="animation-delay:' + (i * 0.22).toFixed(2) + 's"></b>'; return '<span class="l-lab">Condition&nbsp;</span><span class="l-cond" style="--l-c:' + c.color + '">' + lnEsc(c.raised ? c.label : "BLUE") + '</span><span class="l-lights" style="--l-c:' + c.color + '">' + b + "</span>";
+    case "trace": return '<div class="l-trace">' + LN_PATH + "</div>";
+    case "triA": return lnTri(pl, lnAdjMain(pl, 0), s);
+    case "triS": return lnTri(pl, '<div class="l-stk"><div class="labs"><span class="gl">GEO</span><span class="bl">BIO</span><span class="ml">MET</span></div><div class="rows">' + lnSeg(14, "g") + lnSeg(14, "b") + lnSeg(14, "m") + "</div></div>", s);
+    case "triE": return lnTri(pl, '<div class="l-eq"><span class="g"><span class="gl">GEO</span>' + lnCols("c1") + '</span><span class="g"><span class="bl">BIO</span>' + lnCols("c2") + '</span><span class="g"><span class="ml">MET</span>' + lnCols("c3") + "</span></div>", s);
+    case "shuttle": return '<div class="l-shut"><svg width="20" height="12" viewBox="0 0 20 12"><path d="M2 6 L7 2 H15 L18 6 L15 10 H7 Z" fill="#9ea5ba"/><rect x="8" y="5" width="6" height="2" fill="#000"/></svg><span class="l-lab">Shuttle 1&nbsp;</span><span class="st st-standby">[DOCKED]</span><span class="l-grow"></span><span class="l-sg"><u class="on"></u><u class="on"></u><u class="on"></u><u class="on"></u><u class="on"></u><u class="on"></u></span></div>';
+    case "away": return '<div class="l-away"><span class="l-lab">Away team&nbsp;</span>' + [0, 1, 2, 3].map(function () { return '<span class="l-life">' + LN_PULSE.replace("COLOR", "#41c4f7") + "</span>"; }).join("") + '<span class="l-grow"></span><span class="st st-nominal">4 / 4</span></div>';
+  }
+  return "";
+}
+
+// The lifecycle: put the host element in the left drawer, draw the picked lines, keep them current.
+function startDrawerLines(pl) {
+  var app = pl.app, L = pl.ms.lines, stopped = false, timers = [], cur = {}, ref = null, syncInst = null, rotIdx = 0, tick = 0;
+  var style = document.createElement("style"); style.id = LN_ID; style.textContent = LN_CSS; document.head.appendChild(style);
+  var host = document.createElement("div"); host.className = "lcars-ml";
+  var state = lnSyncState(app);
+  // Untested on iOS, so nothing here may throw into Obsidian: timers are guarded, a line that fails to draw says so, and missing APIs just leave the value blank.
+  var warned = false, sensSince = 0;
+  function warn(e) { if (!warned) { warned = true; console.warn("LCARS drawer lines:", e); } }
+  function gSet(fn, ms) { return window.setInterval(function () { try { fn(); } catch (e) { warn(e); } }, ms); }
+
+  // Device data: battery and connection are event-driven; motion streams only while a line that uses it is on screen.
+  var batt = null, hist = [], pwT = 0, mo = { m: 0, p: 0, r: 0, t: 0 }, sensOn = false, sensTimer = 0, slots = [];
+  var battEv = ["levelchange", "chargingchange", "chargingtimechange", "dischargingtimechange"];
+  var conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+  function contactCount() { try { return Math.max(1, app.workspace.getLeavesOfType("markdown").length); } catch (e) { return 1; } }
+  // No battery API (iOS Safari-style webviews): the power lines run on a slowly drifting stand-in so they still work. No connection speed: the trace runs on a stand-in too.
+  var sim = { level: 0.55 + Math.random() * 0.35, charging: false, chargingTime: Infinity, dischargingTime: Infinity }, simDl = 8;
+  function ctx() { return { pw: lnPwRead(batt || sim), simPw: !batt, net: lnNetRead(), hist: hist, contacts: contactCount() }; }
+  function redrawKinds(keys) {
+    slots.forEach(function (sl, i) { var k = sl.picks[(cur[i] || 0) % sl.picks.length]; if (keys.indexOf(k) > -1) drawStrip(i); });
+  }
+  function simNext() { simDl = Math.max(2, Math.min(20, simDl * (0.8 + Math.random() * 0.4))); return Math.round(simDl * 10) / 10; }
+  function pushHist() {
+    var n = lnNetRead();
+    if (!n.online) return;
+    if (n.dl == null && !hist.length) for (var i = 0; i < 18; i++) hist.push(simNext());
+    hist.push(n.dl != null ? n.dl : simNext());
+    if (hist.length > 18) hist.shift();
+  }
+  function onPower() { redrawKinds(["power", "endurance", "transfer", "systems"]); }
+  function onPowerSoft() { window.clearTimeout(pwT); pwT = window.setTimeout(onPower, 1000); }
+  function onNet() { pushHist(); onState(); redrawKinds(["net", "subspace", "systems"]); }
+  function ondo(e) { if (e.beta != null) { mo.p = e.beta - 90; mo.r = e.gamma || 0; mo.t = Date.now(); } }
+  function onmo(e) {
+    var a = e.acceleration, g = e.accelerationIncludingGravity, mag = 0;
+    if (a && a.x != null) mag = Math.sqrt(a.x * a.x + a.y * a.y + a.z * a.z);
+    else if (g && g.x != null) mag = Math.abs(Math.sqrt(g.x * g.x + g.y * g.y + g.z * g.z) - 9.81);
+    mo.m = mo.m * 0.85 + Math.min(1, mag / 4) * 0.15; mo.t = Date.now();
+  }
+  function sensUpdate() {
+    if (stopped || document.hidden || !host.offsetParent || document.body.classList.contains("lcars-idle")) return;
+    if (!mo.t) {
+      // No motion events (iOS asks for permission first, and some phones have no sensor): after 3 s the line says so.
+      if (Date.now() - sensSince > 3000) host.querySelectorAll('[data-in="s"]').forEach(function (el) { if (el.dataset.mv !== "x") { el.dataset.mv = "x"; el.className = "st st-nominal"; el.textContent = "[STABLE]"; } });
+      if (Date.now() - sensSince > 3000) host.querySelectorAll("[data-inertial]").forEach(function (h) { h.classList.add("sim"); });
+      return;
+    }
+    var cl = function (v) { return Math.max(-45, Math.min(45, v)); };
+    host.querySelectorAll("[data-inertial]").forEach(function (h) {
+      var pi = cl(mo.p), ro = cl(mo.r), row = h.parentElement;
+      if (h.classList.contains("sim")) { h.classList.remove("sim"); h.firstChild.style.transform = ""; h.lastChild.style.transform = ""; }
+      h.firstChild.style.transform = "rotate(" + (-ro / 3).toFixed(1) + "deg) translateY(" + (pi / 5).toFixed(1) + "px)";
+      h.lastChild.style.transform = "translate(" + (ro / 45 * 15).toFixed(1) + "px," + (pi / 45 * 4).toFixed(1) + "px)";
+      var set = function (k, t) { var el = row.querySelector('[data-in="' + k + '"]'); if (el && el.textContent !== t) el.textContent = t; };
+      set("p", "P " + Math.round(pi) + "°"); set("r", "R " + Math.round(ro) + "°");
+      var mv = mo.m > 0.12 ? "1" : "0", sEl = row.querySelector('[data-in="s"]');
+      if (sEl && sEl.dataset.mv !== mv) { sEl.dataset.mv = mv; sEl.className = "st " + (mv === "1" ? "st-active" : "st-nominal"); sEl.textContent = mv === "1" ? "[MOTION]" : "[STABLE]"; }
+    });
+  }
+  function stopSens() {
+    window.removeEventListener("deviceorientation", ondo); window.removeEventListener("devicemotion", onmo);
+    window.clearInterval(sensTimer); sensOn = false; mo.t = 0; mo.m = 0;
+  }
+  function syncSensors() {
+    var need = !!host.querySelector("[data-inertial],[data-geo]");
+    if (need && !sensOn) { sensSince = Date.now(); window.addEventListener("deviceorientation", ondo); window.addEventListener("devicemotion", onmo); sensTimer = gSet(sensUpdate, 150); sensOn = true; }
+    else if (!need && sensOn) stopSens();
+  }
+
+  function place() {
+    var inner = document.querySelector(".workspace-drawer.mod-left .workspace-drawer-inner");
+    if (!inner) return false;
+    host.className = "lcars-ml " + (L.pos === "bottom" ? "is-bottom" : "is-top") + (L.bg === "frame" ? " is-frame" : "") + (L.dot === false ? " no-dot" : "");
+    if (L.pos === "bottom") {
+      var hdr = inner.querySelector(":scope > .workspace-drawer-header");
+      if (hdr) { if (host.parentElement !== inner || host.nextElementSibling !== hdr) inner.insertBefore(host, hdr); host.style.order = getComputedStyle(hdr).order; }
+      else if (host.parentElement !== inner) inner.appendChild(host);
+    } else {
+      if (inner.firstElementChild !== host) inner.insertBefore(host, inner.firstChild);
+      host.style.order = "-1";
+    }
+    return true;
+  }
+  var order = LN_ORDER.map(function (x) { return x[0]; });
+  function activeSlots() {
+    return L.slots.filter(function (sl, i) { return (i === 0 || sl.on !== false) && sl.picks && sl.picks.length; }).map(function (sl) {
+      var pk = order.filter(function (k) { return sl.picks.indexOf(k) > -1; });
+      return { picks: pk, cycle: pk.length > 1 && sl.cycle !== "tap" ? "auto" : sl.cycle, seconds: sl.seconds };
+    });
+  }
+  function stripHTML(sl, i) {
+    try {
+      var p = sl.picks, idx = (cur[i] || 0) % p.length, x = ctx();
+      return lnDotFor(pl, p[idx], state, x) + lnLine(pl, p[idx], state, x);
+    } catch (e) { warn(e); return lnDotX(pl, "d-none") + '<span class="l-dim">Unavailable</span>'; }
+  }
+  function seed(el) {
+    el.querySelectorAll("[data-spark]").forEach(function (g) {
+      // One long random line, made to repeat seamlessly; CSS scrolls it, so nothing runs per tick.
+      var n = 18, v = [], x = 0.5, i;
+      for (i = 0; i < n; i++) { x = Math.max(0.1, Math.min(0.95, x + (Math.random() - 0.5) * 0.5)); v.push(x); }
+      v[n - 1] = v[0];
+      var pts = v.map(function (y, k) { return (k * 40 / (n - 1)).toFixed(1) + "," + (11 - y * 10).toFixed(1); }).concat(v.map(function (y, k) { return (40 + k * 40 / (n - 1)).toFixed(1) + "," + (11 - y * 10).toFixed(1); }));
+      g.firstChild.setAttribute("points", pts.join(" "));
+    });
+    el.querySelectorAll("[data-eq]").forEach(function (b) { b.style.transform = "scaleY(" + (0.2 + Math.random() * 0.8).toFixed(2) + ")"; });
+    el.querySelectorAll(".l-seg[data-seg]").forEach(function (g) {
+      var n = +g.dataset.seg, us = g.children, c = Math.max(1, Math.round(n * (0.25 + Math.random() * 0.6)));
+      g._c = c; g._t = c; for (var j = 0; j < n; j++) us[j].className = j < c ? "on" : "";
+    });
+  }
+  function sweepW() { host.querySelectorAll("[data-sw]").forEach(function (n) { var w = n.offsetWidth; if (w && n._w !== w) { n._w = w; n.style.setProperty("--sw-w", w + "px"); } }); }
+  function afterDraw(el) { el.querySelectorAll(".l-ic").forEach(function (n) { obsidian.setIcon(n, n.dataset.ic); }); seed(el); rot(); sweepW(); syncSensors(); }
+  function drawStrip(i) {
+    var sl = slots[i], el = host.querySelectorAll(".l-strip")[i];
+    if (!sl || !el) return;
+    el.innerHTML = stripHTML(sl, i);
+    try { afterDraw(el); } catch (e) { warn(e); }
+  }
+  function draw() {
+    try { drawRaw(); } catch (e) { warn(e); }
+  }
+  function drawRaw() {
+    if (stopped || !place()) return;
+    slots = activeSlots();
+    host.classList.toggle("has-gap", slots.length > 1 && !!L.spacer);
+    host.innerHTML = slots.map(function (sl, i) { return '<div class="l-strip' + (L.dot === false ? "" : " hd") + '" data-slot="' + i + '" style="' + (sl.cycle === "tap" && sl.picks.length > 1 ? "cursor:pointer" : "") + '">' + stripHTML(sl, i) + "</div>"; }).join("");
+    host.querySelectorAll(".l-strip").forEach(function (el, i) {
+      var sl = slots[i];
+      el.onclick = sl.cycle === "tap" && sl.picks.length > 1 ? function () { cur[i] = (cur[i] || 0) + 1; drawStrip(i); } : null;
+      try { afterDraw(el); } catch (e) { warn(e); }
+    });
+  }
+  function rot() {
+    host.querySelectorAll("[data-rot]").forEach(function (el) {
+      var c = lnCounts(pl), items = [
+        '<span class="l-val">Stardate ' + lnEsc(lnStardate()) + "</span>",
+        '<span class="st st-nominal">' + c.files.toLocaleString() + " files · " + c.folders.toLocaleString() + " folders</span>",
+        '<span class="st ' + LN_STATES[state].cls + '">Link ' + (LN_STATES[state].term ? LN_STATES[state].term : "not set up") + "</span>",
+        '<span class="l-val">' + lnEsc(lnNextEvent(pl)) + "</span>"
+      ];
+      el.innerHTML = items[rotIdx % items.length]; el.style.animation = "none"; void el.offsetWidth; el.style.animation = "";
+    });
+  }
+  // A state change patches the classes and words of the pieces that show it; the rest of the lines keep running. A change must hold for 1.5 s first, so a sync that flaps does not flicker the display.
+  var pend = null, pt = 0;
+  function patch(n) {
+    var was = state, d = LN_STATES[n]; state = n;
+    if ((was === "none") !== (n === "none")) { draw(); return; }
+    host.querySelectorAll("[data-sd]").forEach(function (el) {
+      var k = el.dataset.sd;
+      if (k === "dot") el.className = "l-dot " + d.dot;
+      else if (k === "st") { el.className = "st " + d.cls; el.textContent = d.term ? "[" + d.term + "]" : "CONFIGURE"; }
+      else if (k === "casc") { el.className = "l-casc " + d.casc; el.dataset.casc = n; }
+      else if (k === "hb") el.className = "l-hb " + d.hb;
+    });
+    redrawKinds(["systems"]);
+  }
+  function onState() {
+    var n = lnSyncState(app);
+    if (n === state) { pend = null; window.clearTimeout(pt); return; }
+    if (n === pend) return;
+    pend = n; window.clearTimeout(pt);
+    pt = window.setTimeout(function () { pend = null; var m = lnSyncState(app); if (m !== state) patch(m); }, 1500);
+  }
+
+  try {
+    var sp = app.internalPlugins && app.internalPlugins.getPluginById && app.internalPlugins.getPluginById("sync");
+    if (sp && sp.instance && typeof sp.instance.on === "function") { syncInst = sp.instance; ref = syncInst.on("status-change", onState); }
+  } catch (e) { /* fall back to polling below */ }
+  timers.push(gSet(onState, 5000));
+  // Battery and connection: listeners, plus a speed sample every 20 s for the subspace trace.
+  try { if (navigator.getBattery) navigator.getBattery().then(function (b) { if (stopped) return; batt = b; battEv.forEach(function (e) { b.addEventListener(e, onPowerSoft); }); onPower(); }, function () { /* no battery data */ }); } catch (e) { /* no battery data */ }
+  if (conn && conn.addEventListener) conn.addEventListener("change", onNet);
+  window.addEventListener("online", onNet); window.addEventListener("offline", onNet);
+  pushHist();
+  timers.push(gSet(function () { if (stopped || document.hidden) return; pushHist(); redrawKinds(["subspace"]); }, 20000));
+  timers.push(gSet(function () { if (!stopped && (!host.isConnected || (L.pos === "top" ? host.parentElement && host.parentElement.firstElementChild !== host : false))) draw(); }, 2500));
+  activeSlots().forEach(function (sl, i) {
+    if (sl.cycle === "auto" && sl.picks.length > 1) timers.push(gSet(function () { if (!stopped) { cur[i] = (cur[i] || 0) + 1; drawStrip(i); } }, Math.max(2, Number(sl.seconds) || 4) * 1000));
+  });
+  // One shared tick, every 800 ms, for the random bars; paused while the page is hidden or the main plugin says it is idle. Only the segments that change are written.
+  timers.push(gSet(function () {
+    if (stopped || document.hidden || !host.offsetParent || document.body.classList.contains("lcars-idle")) return;
+    tick++;
+    // GEO follows the accelerometer when it is reporting; the other sensors are simulated.
+    var gm = mo.t ? Math.min(1, mo.m * 2.5) : -1;
+    host.querySelectorAll("[data-eq]").forEach(function (el) {
+      if (Math.random() >= 0.6) return;
+      el.style.transform = "scaleY(" + (gm >= 0 && el.classList.contains("c1") ? 0.18 + Math.random() * (0.15 + 0.85 * gm) : 0.15 + Math.random() * 0.85).toFixed(2) + ")";
+    });
+    sweepW();
+    host.querySelectorAll(".l-seg[data-seg]").forEach(function (el) {
+      var n = +el.dataset.seg, us = el.children, c = el._c === undefined ? Math.round(n / 2) : el._c, t = el._t === undefined ? c : el._t;
+      if (c === t && Math.random() < 0.4) t = Math.round((gm >= 0 && el.classList.contains("g") ? Math.random() * (0.15 + 0.85 * gm) : Math.random()) * n);
+      if (t > c) { us[c].className = "on"; c++; } else if (t < c) { c--; us[c].className = ""; }
+      el._c = c; el._t = t;
+    });
+    if (tick % 4 === 0) { rotIdx++; rot(); }
+    if (!batt && tick % 75 === 0) { sim.level = Math.max(0.35, Math.min(0.98, sim.level + (Math.random() - 0.55) * 0.03)); onPower(); }
+  }, 800));
+  // The adjacent tricorder, one of each graph and rotating: every sensor takes the next graph in turn.
+  if (L.adj === "rotate") {
+    var adjShift = 0;
+    timers.push(gSet(function () {
+      if (stopped || document.hidden || !host.offsetParent || document.body.classList.contains("lcars-idle")) return;
+      adjShift++;
+      host.querySelectorAll('.l-adj[data-adj="rotate"]').forEach(function (el) {
+        var tmp = document.createElement("div"); tmp.innerHTML = lnAdjMain(pl, adjShift); var nn = tmp.firstChild; el.replaceWith(nn); seed(nn);
+      });
+    }, Math.max(3, Number(L.adjSeconds) || 8) * 1000));
+  }
+  pl.registerEvent(app.workspace.on("layout-change", function () { window.setTimeout(draw, 50); }));
+  draw();
+  return function stop() {
+    stopped = true;
+    timers.forEach(function (t) { window.clearInterval(t); }); window.clearTimeout(pt); window.clearTimeout(pwT);
+    stopSens();
+    try { if (batt) battEv.forEach(function (e) { batt.removeEventListener(e, onPowerSoft); }); } catch (e) { /* ignore */ }
+    if (conn && conn.removeEventListener) conn.removeEventListener("change", onNet);
+    window.removeEventListener("online", onNet); window.removeEventListener("offline", onNet);
+    try { if (syncInst && ref) syncInst.offref(ref); } catch (e) { /* ignore */ }
+    host.remove(); style.remove();
+  };
+}
+
 class LcarsObsidian extends obsidian.Plugin {
   async onload() {
     this.settings = Object.assign({}, DEFAULTS, await this.loadData());
     this.settings.channels = Object.assign({}, DEFAULTS.channels, this.settings.channels);
+    try { await this.initPhone(); }
+    catch (e) {
+      // The phone layout must never stop the plugin from loading.
+      console.warn("LCARS phone layout settings could not be read; the layout is off:", e);
+      this.settings.phone = { on: false, lines: Object.assign({}, LN_DEFAULTS, { on: false }) };
+    }
     this.hooks = {};
     this.applyMotion();
     var hadBusy = !!(this.settings.lights && this.settings.lights.restBusy);
@@ -1265,8 +2229,91 @@ class LcarsObsidian extends obsidian.Plugin {
     else if (!s.ribbonRoles && this._stopRibbon) { this._stopRibbon(); this._stopRibbon = null; }
   }
 
+  // The phone layout settings live under settings.phone: on, bottom, lines.
+  get ms() { return this.settings.phone; }
+  savePhone() { return this.saveData(this.settings); }
+
+  async initPhone() {
+    var S = this.settings, saved = S.phone, fresh = !saved;
+    if (!saved) {
+      // First run with the phone layout inside this plugin: bring over what LCARS Local Sandbox saved, if it is installed.
+      try {
+        var d = JSON.parse(await this.app.vault.adapter.read(this.app.vault.configDir + "/plugins/lcars-local-sandbox/data.json"));
+        if (d && (d.lines || d.bottom || d.on !== undefined)) saved = { on: d.on, bottom: d.bottom, lines: d.lines };
+      } catch (e) { /* not installed, or nothing saved */ }
+    }
+    var loaded = saved || {};
+    var hadSlots = !!(loaded.lines && Array.isArray(loaded.lines.slots));
+    var ph = S.phone = Object.assign({ on: true }, loaded);
+    ph.lines = Object.assign({}, LN_DEFAULTS, ph.lines);
+    var ml = ph.lines;
+    if (!hadSlots) {
+      // From the first version (picks and mode): two lines became two slots; one cycling line became one slot that cycles.
+      var order = LN_ORDER.map(function (x) { return x[0]; }), old = (Array.isArray(ml.picks) ? ml.picks : ["link", "triA"]).filter(function (k) { return order.indexOf(k) > -1; });
+      old.sort(function (a, b) { return order.indexOf(a) - order.indexOf(b); });
+      if (ml.mode === "auto" || ml.mode === "tap") ml.slots = [{ on: true, picks: old, cycle: ml.mode, seconds: Number(ml.seconds) || 4 }, { on: false, picks: [], cycle: "off", seconds: 4 }];
+      else ml.slots = [{ on: true, picks: old.slice(0, 1), cycle: "off", seconds: 4 }, { on: old.length > 1, picks: old.slice(1, 2), cycle: "off", seconds: 4 }];
+    }
+    ml.slots = [0, 1].map(function (i) { return Object.assign({ on: true, picks: [], cycle: "off", seconds: 4 }, ml.slots[i]); });
+    ml.slots.forEach(function (sl) {
+      if (sl.picks.indexOf("triE") > -1) {
+        sl.picks = sl.picks.filter(function (k) { return k !== "triE"; });
+        if (sl.picks.indexOf("triA") < 0) sl.picks.push("triA");
+        if (!loaded.lines || !loaded.lines.adj) ml.adj = "equalizer";
+      }
+    });
+    if (fresh) await this.savePhone();
+  }
+
+  // Phone layout (the slab). Pure styling.
+  applyMobile() {
+    var on = this.ms.on !== false, el = document.getElementById(MS_ID), b = document.body;
+    if (on && !el) { el = document.createElement("style"); el.id = MS_ID; el.textContent = MS_CSS; document.head.appendChild(el); }
+    if (!on && el) el.remove();
+    b.classList.toggle(MS_CLASS, on);
+    // Bottom clearance: Auto follows Obsidian's own offset for the Android navigation buttons; Custom sets it in px (0 = edge to edge).
+    var bot = this.ms.bottom || {};
+    if (on && bot.mode === "custom") b.style.setProperty("--ms-bot-override", Math.max(0, Number(bot.px) || 0) + "px");
+    else b.style.removeProperty("--ms-bot-override");
+    this.watchDrawers(on);
+  }
+
+  // The drawer lines (phone only): stop any running set, start a new one from the saved settings.
+  applyLines() {
+    if (this._stopLines) { this._stopLines(); this._stopLines = null; }
+    var L = this.ms.lines;
+    if (this.ms.on !== false && L.on !== false && document.body.classList.contains("is-phone")) {
+      try { this._stopLines = startDrawerLines(this); }
+      catch (e) { console.warn("LCARS drawer lines could not start:", e); this._stopLines = null; }
+    }
+  }
+
+  // Mirror Obsidian's own drawer-open classes (set on the workspace element) onto the body, so the note's bars and the navbar, which sit outside it, can pick them up.
+  watchDrawers(on) {
+    var self = this, b = document.body;
+    if (this._dw) { this._dw.disconnect(); this._dw = null; }
+    if (!on) { b.classList.remove("lcars-ms-left-open", "lcars-ms-right-open"); return; }
+    this.app.workspace.onLayoutReady(function () {
+      var ws = self.app.workspace.containerEl;
+      if (!ws || self.ms.on === false) return;
+      var sync = function () {
+        b.classList.toggle("lcars-ms-left-open", ws.classList.contains("is-left-sidedock-open"));
+        b.classList.toggle("lcars-ms-right-open", ws.classList.contains("is-right-sidedock-open"));
+      };
+      sync();
+      self._dw = new MutationObserver(sync);
+      self._dw.observe(ws, { attributes: true, attributeFilter: ["class"] });
+    });
+  }
+
   onunload() {
     if (this._stopTitles) this._stopTitles();
+    var msEl = document.getElementById(MS_ID);
+    if (msEl) msEl.remove();
+    if (this._stopLines) { this._stopLines(); this._stopLines = null; }
+    if (this._dw) this._dw.disconnect();
+    document.body.classList.remove(MS_CLASS, "lcars-ms-left-open", "lcars-ms-right-open");
+    document.body.style.removeProperty("--ms-bot-override");
     if (this._stopRibbon) this._stopRibbon();
     this.raised.forEach(function (r) { window.clearTimeout(r.timer); });
     this.unmountAll();
@@ -2787,6 +3834,8 @@ class LcarsObsidian extends obsidian.Plugin {
       raise: function (id, o) { return me.raise(id, Object.assign({ source: "api" }, o)); },
       clear: function (id, o) { return me.clear(id, Object.assign({ source: "api" }, o)); },
     } };
+    try { this.applyMobile(); } catch (e) { console.warn("LCARS phone layout could not start:", e); }
+    this.app.workspace.onLayoutReady(function () { try { me.applyLines(); } catch (e) { console.warn("LCARS drawer lines could not start:", e); } });
     window.lcarsObsidian = { apiVersion: 1, plugin: this, hooks: this.hooks, api: api };
     window.dispatchEvent(new Event("lcars-obsidian-ready"));
     window.lcarsStardate = function (when) { return stardate(Number(self.settings.stardateYear) || 2401, when); };
@@ -2830,7 +3879,7 @@ class LcarsSettings extends obsidian.PluginSettingTab {
   // The tab list. A second plugin can add tabs through hooks.settingsTabs:
   // it returns [{ id, name, render(el, ctx) }]. They sit before Statuses.
   tabList() {
-    var p = this.plugin, list = [["general", "General"], ["banner", "Banner"], ["statuses", "Statuses"], ["lights", "Running lights"]], extra = [];
+    var p = this.plugin, list = [["general", "General"], ["banner", "Banner"], ["statuses", "Statuses"], ["lights", "Running lights"], ["phone", "Phone"]], extra = [];
     try { var h = p.hooks && p.hooks.settingsTabs; if (h) extra = h.call(p) || []; } catch (e) { extra = []; }
     extra.forEach(function (t) {
       if (t && t.id && t.name && typeof t.render === "function") list.push([t.id, t.name, t]);
@@ -3092,7 +4141,89 @@ class LcarsSettings extends obsidian.PluginSettingTab {
     else if (p._tab === "general") this.renderGeneral();
     else if (p._tab === "banner") this.renderBanner();
     else if (p._tab === "lights") this.renderLights();
+    else if (p._tab === "phone") this.renderPhone();
     else this.renderStatuses();
+  }
+
+  renderPhone() {
+    var root = this.containerEl, host = this.plugin;
+    new obsidian.Setting(root).setName("Phone layout: the slab")
+      .setDesc("LCARS look for the phone: thin capped bars with keys, a solid slate left drawer, a blue subframe on the right drawer. Phone only; tablets and desktop are untouched.")
+      .addToggle(function (t) {
+        t.setValue(host.ms.on !== false).onChange(async function (v) { host.ms.on = v; await host.savePhone(); host.applyMobile(); });
+      });
+    var bot = host.ms.bottom || (host.ms.bottom = { mode: "auto", px: 48 });
+    new obsidian.Setting(root).setName("Bottom clearance")
+      .setDesc("Where the lower bars sit above the screen's bottom edge, so they clear the phone's navigation buttons. Auto follows what Obsidian reports for your phone. Custom is for phones that report it wrongly; 0 runs the bars to the very edge.")
+      .addDropdown(function (d) {
+        d.addOption("auto", "Auto").addOption("custom", "Custom (px)").setValue(bot.mode || "auto")
+          .onChange(async function (v) { bot.mode = v; await host.savePhone(); host.applyMobile(); });
+      })
+      .addText(function (t) {
+        t.setPlaceholder("48").setValue(String(bot.px === undefined ? 48 : bot.px))
+          .onChange(async function (v) { bot.px = Number(v) || 0; await host.savePhone(); host.applyMobile(); });
+      });
+    // Drawer lines (phone)
+    var ln = host.ms.lines, self = this;
+    var saveLn = async function (redraw) { await host.savePhone(); host.applyLines(); if (redraw) self.display(); };
+    var openSl = host._lnOpen || (host._lnOpen = {});
+    new obsidian.Setting(root).setName("Drawer lines (phone)").setDesc("Animated readout lines in the left drawer, next to Notebook Navigator's buttons. Phone only; the desktop has the banner.").setHeading();
+    new obsidian.Setting(root).setName("Show Data Lines").addToggle(function (t) { t.setValue(ln.on !== false).onChange(async function (v) { ln.on = v; await saveLn(true); }); });
+    if (ln.on !== false) {
+      new obsidian.Setting(root).setName("Short ship name").setDesc("Used on one-line readouts where the full name does not fit. Empty: the banner's ship name without \"USS\".")
+        .addText(function (t) { t.setPlaceholder(lnShip(host)).setValue(ln.short || "").onChange(async function (v) { ln.short = v; await saveLn(false); }); });
+      var names = {}; LN_ORDER.forEach(function (x) { names[x[0]] = x[1]; });
+      [0, 1].forEach(function (i) {
+        var sl = ln.slots[i];
+        if (i === 1) new obsidian.Setting(root).setName("Second slot").setDesc("A second line under the first.").addToggle(function (t) { t.setValue(sl.on !== false).onChange(async function (v) { sl.on = v; await saveLn(true); }); });
+        if (i === 1 && sl.on === false) return;
+        var d = root.createEl("details", { cls: "lcars-set-sec" });
+        d.open = !!openSl[i]; d.addEventListener("toggle", function () { openSl[i] = d.open; });
+        var cyc = sl.picks.length > 1 ? (sl.cycle === "tap" ? "cycling on tap" : "cycling every " + (Number(sl.seconds) || 4) + " s") : "";
+        d.createEl("summary", { cls: "lcars-set-sum", text: "Slot " + (i + 1) + ": " + (sl.picks.length ? LN_ORDER.filter(function (x) { return sl.picks.indexOf(x[0]) > -1; }).map(function (x) { return names[x[0]]; }).join(", ") : "empty") + (cyc ? " (" + cyc + ")" : "") });
+        var body = d.createDiv({ cls: "lcars-set-body" });
+        LN_ORDER.forEach(function (it) {
+          new obsidian.Setting(body).setName(it[1]).addToggle(function (t) {
+            t.setValue(sl.picks.indexOf(it[0]) > -1).onChange(async function (v) {
+              sl.picks = sl.picks.filter(function (k) { return k !== it[0]; }); if (v) sl.picks.push(it[0]);
+              if (sl.picks.length > 1 && sl.cycle === "off") sl.cycle = "auto";
+              if (sl.picks.length < 2) sl.cycle = "off";
+              await saveLn(true);
+            });
+          });
+        });
+        if (sl.picks.length > 1) {
+          new obsidian.Setting(root).setName("Slot " + (i + 1) + " cycles").setDesc("The slot shows one line at a time.").addDropdown(function (dd) {
+            dd.addOption("auto", "Automatically").addOption("tap", "On tap").setValue(sl.cycle === "tap" ? "tap" : "auto").onChange(async function (v) { sl.cycle = v; await saveLn(true); });
+          });
+          if (sl.cycle !== "tap") new obsidian.Setting(root).setName("Slot " + (i + 1) + " seconds per line").addText(function (t) { t.setValue(String(sl.seconds)).onChange(async function (v) { sl.seconds = Math.max(2, Number(v) || 4); await saveLn(false); }); });
+        }
+      });
+      var both = ln.slots[0].picks.length && ln.slots[1].on !== false && ln.slots[1].picks.length;
+      if (both) new obsidian.Setting(root).setName("Gray spacer between the slots").setDesc("Keeps the frame-colored gap between two black lines. On the frame color the gap is invisible.").addToggle(function (t) { t.setValue(!!ln.spacer).onChange(async function (v) { ln.spacer = v; await saveLn(false); }); });
+      new obsidian.Setting(root).setName("Position").setDesc("Above the buttons: below the drawer's top curve. Bottom: above the vault name, clear of the bottom curve.").addDropdown(function (dd) {
+        dd.addOption("top", "Above the buttons").addOption("bottom", "Bottom of the drawer").setValue(ln.pos).onChange(async function (v) { ln.pos = v; await saveLn(false); });
+      });
+      new obsidian.Setting(root).setName("Background").addDropdown(function (dd) {
+        dd.addOption("black", "Black").addOption("frame", "LCARS frame color").setValue(ln.bg).onChange(async function (v) { ln.bg = v; await saveLn(false); });
+      });
+      // Tricorder settings appear only while a tricorder line is in a slot.
+      var inSlots = function (test) { return ln.slots.some(function (sl, i) { return (i === 0 || sl.on !== false) && sl.picks.some(test); }); };
+      new obsidian.Setting(root).setName("Status circle on every line").setDesc("The colored circle at the left of each line. It follows what that line reports: link state, power level, the active condition, or steady blue for lines with no state.").addToggle(function (t) { t.setValue(ln.dot !== false).onChange(async function (v) { ln.dot = v; await saveLn(true); }); });
+      if (inSlots(function (k) { return k === "triA"; })) new obsidian.Setting(root).setName("Adjacent tricorder graph").setDesc("How GEO, BIO and MET are drawn side by side.").addDropdown(function (dd) {
+        dd.addOption("boxes", "Boxes (horizontal segments)").addOption("equalizer", "Equalizer (columns)").addOption("spark", "Sparkline (scrolling line)").addOption("mixed", "One of each (boxes, equalizer, sparkline)").addOption("rotate", "One of each, rotating").setValue(ln.adj || "boxes").onChange(async function (v) { ln.adj = v; await saveLn(true); });
+      });
+      if (ln.adj === "rotate" && inSlots(function (k) { return k === "triA"; })) new obsidian.Setting(root).setName("Seconds per rotation").setDesc("Each sensor takes the next graph after this many seconds.").addText(function (t) { t.setValue(String(ln.adjSeconds || 8)).onChange(async function (v) { ln.adjSeconds = Math.max(3, Number(v) || 8); await saveLn(false); }); });
+      var anyTri = inSlots(lnIsTri);
+      if (anyTri) {
+        new obsidian.Setting(root).setName("Tricorder fourth metric").setDesc("An extra slot on the tricorder lines: the data link word with an icon, a small cascade, or a heartbeat.").addDropdown(function (dd) {
+          dd.addOption("off", "None").addOption("text", "Data text").addOption("visual", "Data visual").addOption("heartbeat", "Heartbeat").setValue(ln.slot).onChange(async function (v) { ln.slot = v; await saveLn(true); });
+        });
+        if (ln.slot !== "off") new obsidian.Setting(root).setName("Fourth metric width").setDesc("One half is the minimum that fits the text.").addDropdown(function (dd) {
+          dd.addOption("half", "One half").addOption("two3", "Two thirds").setValue(ln.slotW === "two3" ? "two3" : "half").onChange(async function (v) { ln.slotW = v; await saveLn(false); });
+        });
+      }
+    }
   }
 
   renderGeneral() {

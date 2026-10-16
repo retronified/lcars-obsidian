@@ -1,18 +1,27 @@
 # Changelog
 
-## Unreleased
-
-- Fixed: a Custom timing of two numbers (on and off) forced a hard blink on every light behavior. Now only the plain flash blinks; pulse, flicker, glow and scan keep their own motion and use the combined length as their cycle.
-- Changed: the plugin now loads on mobile (`isDesktopOnly` is false), but the banner is not mounted on phones and tablets. The theme is untested on mobile.
-
 ## 0.2.0
 
-- Changed: the plugin id is now `lcars-obsidian` (it was `lcars-companion`), so a by-hand install goes in `.obsidian/plugins/lcars-obsidian/`. If you installed 0.1.0, move your settings (`data.json`) into the new folder and remove the old one.
-- Changed: the extension interface is renamed from "companion" to "extension". `window.lcarsCompanion` is now `window.lcarsObsidian`, and the events `lcars-companion-ready`, `lcars-companion-gone` and `lcars-companion-status-changed` are now `lcars-obsidian-ready`, `lcars-obsidian-gone` and `lcars-obsidian-status-changed`. The doc moved to `docs/extension-contract.md`. It is still experimental.
-- Changed: the theme sources moved from `snippets/` to `theme/`, and the README no longer describes copying snippets by hand. The theme comes with the plugin.
-- Changed: Style Manager is described as optional.
-- Changed: wording across the README, the theme comments and the plugin source no longer calls the plugin the "Companion".
-- Fixed: Style Manager could not load the LCARS Palette pickers. The "Void black" description held a colon in the middle of the sentence, which broke the settings block's YAML, so none of the palette settings appeared. The description is now quoted.
+### New
+
+- A phone layout, on by default and on phones only: thin capped bars with keys on the note, a solid slab for the left drawer, and a bracket with a blue subframe for the right drawer. The Phone tab has the switch and a bottom clearance for the Android navigation buttons. Not yet checked on iOS.
+- Drawer lines on the phone: one or two animated readouts in the left drawer, each with a status dot at the left. Choose from 18 lines, including data link, connection, subspace trace, power, systems status, condition, tricorders, sweep scanner and inertial dampers. Each slot can cycle through its lines automatically or on tap.
+- The data link reads the Sync plugin: ONLINE, ACTIVE, SEARCHING, UNINITIALIZED, STANDBY, SIGNAL LOST, ERROR, and OFFLINE when the phone has no network. Without Sync it reads CONFIGURE DATA LINK.
+- Real device readings where the phone provides them: battery, connection, and motion. Where it does not, the lines keep working on stand-in values or say Unavailable, and never stop the plugin from loading (iOS is untested).
+
+### Fixes
+
+- A Custom timing of two numbers (on and off) forced a hard blink on every light behavior. Now only the plain flash blinks; pulse, flicker, glow and scan keep their own motion and use the combined length as their cycle.
+- Style Manager could not load the LCARS Palette pickers. The "Void black" description held a colon in the middle of the sentence, which broke the settings block's YAML, so none of the palette settings appeared. The description is now quoted.
+
+### Other changes
+
+- The plugin now loads on mobile (`isDesktopOnly` is false), but the banner is not mounted on phones and tablets. The theme is untested on mobile.
+- The plugin id is now `lcars-obsidian` (it was `lcars-companion`), so a by-hand install goes in `.obsidian/plugins/lcars-obsidian/`. If you installed 0.1.0, move your settings (`data.json`) into the new folder and remove the old one.
+- The extension interface is renamed from "companion" to "extension". `window.lcarsCompanion` is now `window.lcarsObsidian`, and the events `lcars-companion-ready`, `lcars-companion-gone` and `lcars-companion-status-changed` are now `lcars-obsidian-ready`, `lcars-obsidian-gone` and `lcars-obsidian-status-changed`. The doc moved to `docs/extension-contract.md`. It is still experimental.
+- The theme sources moved from `snippets/` to `theme/`, and the README no longer describes copying snippets by hand. The theme comes with the plugin.
+- Style Manager is described as optional.
+- Wording across the README, the theme comments and the plugin source no longer calls the plugin the "Companion".
 
 ## 0.1.0
 
