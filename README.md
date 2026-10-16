@@ -5,7 +5,7 @@ A Picard-era LCARS look for [Obsidian](https://obsidian.md), installed as one pl
 - **The theme**: the LCARS frame, palette, motion, ribbon and sidebar rows, built into the plugin's stylesheet. There is nothing to copy or switch on.
 - **The plugin features**: a ship's bridge banner at the top of your sidebar, and a row of **running lights** under it that can show status, time and activity.
 
-> Built for desktop. Loads on mobile without the banner (the look is untested there). Needs Obsidian 1.13.0 or newer. **Dark mode only: light mode is not supported yet.** Version 0.2.0.
+> Built for desktop, with a **phone layout** (new in 0.2.0). Needs Obsidian 1.13.0 or newer. **Dark mode only: light mode is not supported yet.** Version 0.2.0.
 
 LCARS was designed by Michael Okuda. This is an unofficial fan work; see [CREDITS.md](CREDITS.md).
 
@@ -18,6 +18,24 @@ The banner changes with the status. Left to right: Code blue, Red alert, Yellow.
 |                                                     |                                                     |                                                     |
 | --------------------------------------------------- | --------------------------------------------------- | --------------------------------------------------- |
 | ![Code blue](docs/screenshots/status-code-blue.png) | ![Red alert](docs/screenshots/status-red-alert.png) | ![Yellow alert](docs/screenshots/status-yellow.png) |
+
+## On the phone
+
+New in 0.2.0: a phone layout, on by default and on phones only. The desktop keeps the banner. The phone gets the same look in a form that suits a small screen, and draws it instead of the banner. Tablets are not fully supported yet.
+
+<p align="center">
+  <img src="docs/screenshots/Screenshot_20261015_233428_Obsidian.jpg" alt="The phone layout: a note with capped bars and pill keys" width="327">
+  <img src="docs/screenshots/Screenshot_20261015_233501_Obsidian.jpg" alt="The phone layout: the left drawer with its slab and drawer lines" width="327">
+</p>
+
+- **Thin capped bars with keys on the note.** Thin capped bars frame the note, with a stardate tag, and the note's buttons are pill keys.
+- **A solid slab for the left drawer.** The file browser sits in a slate slab with a blue view selector and pill buttons.
+- **A bracket with a blue subframe for the right drawer.** The right drawer (backlinks, outline) gets a frame with a blue inner frame.
+- **Drawer lines.** One or two animated readouts in the left drawer, each with a status dot at its left. See "Phone" under the settings pages.
+- **The data link.** The *Data link* line reads the Sync plugin: ONLINE, ACTIVE, SEARCHING, UNINITIALIZED, STANDBY, SIGNAL LOST or ERROR. It reads OFFLINE when the phone has no network, and CONFIGURE DATA LINK when Sync is not installed.
+- **Real device readings.** Where the phone provides them, the lines show your battery, your connection and the phone's motion. Where it does not, a line keeps working on stand-in values or says Unavailable. A missing sensor never stops the plugin from loading.
+
+Checked on Android. Not yet checked on iOS. Desktop is not touched by the phone layout.
 
 The settings pages: Statuses, and Running lights.
 
@@ -44,13 +62,14 @@ The settings pages: Statuses, and Running lights.
 - **Statuses**: a short, ordered list of named states (Red alert, Gray mode, Blue alert, Yellow alert, Nominal, and any you add). Each has its own name, color, text effect and, if you want it, its own lights.
 - **Ribbon roles**: each left-ribbon button is colored by where its pane opens (right sidebar, editor, left sidebar), learned the first time you press it.
 - **Note title blocks**: the block and stripe beside each note's title.
+- **Phone layout** (phones only): capped bars and pill keys on the note, a slab left drawer, a bracket right drawer, and animated drawer lines.
 - **Ship status readout**: five small bars that read your vault: words in the current note (NOTE), time since the note was edited (MOD), open panes (DOCKS), open tasks (TASK), and time since the last daily note edit (BRDG).
 
 The plugin works on its own: the theme is part of it, and every theme variable the banner reads has a fallback.
 
 ## Requirements
 
-**Always:** Obsidian 1.13.0 or newer. Desktop is the supported platform; on mobile the plugin loads but draws no banner.
+**Always:** Obsidian 1.13.0 or newer.
 
 ### The theme (built into the plugin)
 
@@ -109,7 +128,7 @@ Which part of the theme needs what:
 
 ## The settings pages
 
-The settings page has four tabs.
+The settings page has five tabs: General, Banner, Statuses, Running lights and Phone.
 
 ### General
 The ship's name and registry. **Current status** (the one status raised by hand). Standby: how long with no input before the frame dims, and whether it dims. **Interface**: switches for the ribbon roles and the note title blocks. A **Debug** group: pause all motion, switch the lights' animation off, and **Why the lights look like this right now**, which says where every value of the current lights comes from.
@@ -139,6 +158,16 @@ Light styles: **Data cascade** (random flicker, with a direction, a mix and a cl
 
 **Rows** can be set per status (in its Custom config). Changes in the number of rows ease the banner to its new height.
 
+### Phone
+Settings for the phone layout. These do nothing on desktop and tablets.
+
+- **Phone layout: the slab.** The on/off switch for the whole phone look.
+- **Bottom clearance.** How far above the screen's bottom edge the lower bars sit, so they clear the Android navigation buttons. *Auto* follows what Obsidian reports. *Custom (px)* is for a phone that reports it wrongly; 0 runs the bars to the very edge.
+- **Drawer lines.** *Show Data Lines* turns the readouts on. A **Short ship name** is used on one-line readouts where the full name does not fit (empty: the banner's name without "USS").
+- **Slots.** There are up to two slots. Each slot shows one line, or cycles through the lines you pick, automatically (with seconds per line) or on tap. Pick from 18 lines: Data link, Data link (connection), Subspace trace (link speed), Data cascade, Power reserves, Power endurance, Power transfer (charging), Systems status, Condition scan, Rotating readout, Condition with lights, Pulse trace, Tricorder (adjacent), Tricorder (stacked), Sweep scanner, Inertial dampers, Shuttlecraft status and Away team life signs.
+- **Layout of the lines.** Position (above the buttons, or the bottom of the drawer), background (black or the frame color), a gray spacer between the two slots, and a status circle at the left of each line that follows what the line reports.
+- **Tricorder options** appear while a tricorder line is in a slot: how the adjacent graphs are drawn (boxes, equalizer, sparkline, one of each, or rotating) and an optional fourth metric.
+
 ## Commands, links and the API
 
 **Commands** (assign hotkeys in Settings, Hotkeys): *Toggle red alert*, *Toggle gray mode*, and one *Toggle status: NAME* for every other status that can be raised by hand. New statuses get their command the next time the plugin loads. *Toggle ribbon debug logging* writes what the ribbon learned from each press to the developer console.
@@ -158,7 +187,7 @@ obsidian://lcars-status?toggle=red
 
 ## Optional: Style Manager
 
-Style Manager is optional. With the Style Manager plugin, **LCARS Palette** in Style Manager has pickers and sliders for the frame, ribbon and tab colors, folder text (weight, case, brightness), the sidebar row spacing, the banner (drop and padding), motion (including an **All motion off** switch and the active folder's pulse) and more. Without Style Manager every one of them keeps its default. The dark palette for Minimal's own colors is built into `lcars-core`, so Style Manager is not needed to get the LCARS look.
+With the Style Manager plugin, **LCARS Palette** has pickers and sliders for the frame, ribbon and tab colors, folder text (weight, case, brightness), the sidebar row spacing, the banner (drop and padding), motion (including an **All motion off** switch and the active folder's pulse) and more. Without it every one of them keeps its default.
 
 ## Styling
 
@@ -171,8 +200,8 @@ The resting lights are cheap. A few light styles redraw every frame and are mark
 ## Compatibility and limits
 
 - **Dark mode only.** Light mode is not supported yet: the frame, palette and text colors are tuned for a dark scheme (Minimal's is the tested one).
-- Desktop is the supported platform (Windows, macOS, Linux). On phones and tablets the plugin loads but draws no banner, and the theme is untested there.
-- Needs Obsidian 1.13.0 or newer (the styles use modern CSS: `pow()`, `hypot()`, `@property`, `color-mix()`).
+- Desktop is the main platform (Windows, macOS, Linux). Phones get the phone layout (see above). On tablets the plugin loads but draws no banner, and nothing tablet-specific is styled yet.
+- Obsidian 1.13.0 is the minimum because the styles use modern CSS: `pow()`, `hypot()`, `@property`, `color-mix()`.
 - The ribbon roles are remembered per vault. A vault that has never learned a button shows it neutral until you press it (a few common buttons are known from the start).
 - Notebook Navigator's own Shortcuts and Recent files settings change the sidebar's layout. The theme lines the rows up for the usual combinations; tell us if one looks uneven.
 - The version 0.x settings may still change between releases.
@@ -180,8 +209,6 @@ The resting lights are cheap. A few light styles redraw every frame and are mark
 ## Development
 
 `main.js` is the plugin's source and needs no build. `styles.css` is **generated**: edit `src/plugin.css` or the files in `theme/`, then run `python3 tools/build_styles.py` (add `--check` to see whether it is stale). The release workflow refuses a tag if it is.
-
-The theme sources live in `theme/`.
 
 `tools/` has `build_styles.py`, which builds `styles.css`, `gen_motion_off.py`, which regenerates the block of CSS that turns motion off, and `embed_font.py`, which rebuilds the embedded Antonio font in `lcars-core` from `fonts/Antonio/`.
 

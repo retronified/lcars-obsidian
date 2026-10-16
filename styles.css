@@ -5134,6 +5134,19 @@ html:root:root body .mod-left-split .nn-navigation-pane .nn-navigation-pane-scro
   padding-bottom: 0.15rem;
 }
 
+/* Readable line length on: Minimal sizes and centers the title with
+   `.cm-sizer > .inline-title` (width: --line-width, max-width:
+   --max-width, auto side margins). The row wraps the title, so that
+   selector no longer matches and the row, with its right assembly,
+   ran on to the pane's edge. Give the row the same three values, with
+   fallbacks for when Minimal is not the theme. Off, the row keeps
+   filling the pane as before. */
+.markdown-source-view.mod-cm6.is-readable-line-width .cm-sizer > .lcars-title-row {
+  width: var(--line-width, var(--file-line-width, 100%));
+  max-width: var(--max-width, 100%);
+  margin-inline: var(--content-margin, auto) !important;
+}
+
 .lcars-title-row > .inline-title {
   padding-top: 0;
   padding-bottom: 0;

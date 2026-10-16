@@ -5,6 +5,10 @@
 ### New
 
 - A phone layout, on by default and on phones only: thin capped bars with keys on the note, a solid slab for the left drawer, and a bracket with a blue subframe for the right drawer. The Phone tab has the switch and a bottom clearance for the Android navigation buttons. Not yet checked on iOS.
+
+  <img src="docs/screenshots/Screenshot_20261015_233428_Obsidian.jpg" alt="The phone layout: a note with capped bars and pill keys" width="240">
+  <img src="docs/screenshots/Screenshot_20261015_233501_Obsidian.jpg" alt="The phone layout: the left drawer with its slab and drawer lines" width="240">
+
 - Drawer lines on the phone: one or two animated readouts in the left drawer, each with a status dot at the left. Choose from 18 lines, including data link, connection, subspace trace, power, systems status, condition, tricorders, sweep scanner and inertial dampers. Each slot can cycle through its lines automatically or on tap.
 - The data link reads the Sync plugin: ONLINE, ACTIVE, SEARCHING, UNINITIALIZED, STANDBY, SIGNAL LOST, ERROR, and OFFLINE when the phone has no network. Without Sync it reads CONFIGURE DATA LINK.
 - Real device readings where the phone provides them: battery, connection, and motion. Where it does not, the lines keep working on stand-in values or say Unavailable, and never stop the plugin from loading (iOS is untested).
@@ -12,6 +16,7 @@
 ### Fixes
 
 - A Custom timing of two numbers (on and off) forced a hard blink on every light behavior. Now only the plain flash blinks; pulse, flicker, glow and scan keep their own motion and use the combined length as their cycle.
+- With Readable line length on, the title bar (the block and stripe beside a note's title) ran past the text column to the edge of the pane. It now stays within the column. With the setting off nothing changes.
 - Style Manager could not load the LCARS Palette pickers. The "Void black" description held a colon in the middle of the sentence, which broke the settings block's YAML, so none of the palette settings appeared. The description is now quoted.
 
 ### Other changes
@@ -26,6 +31,8 @@
 ## 0.1.0
 
 First release. The repository holds the plugin and the theme it carries.
+
+![The LCARS sidebar: banner, running lights, ribbon and Notebook Navigator rows](docs/screenshots/sidebar.png)
 
 - The theme is built into the plugin: install the plugin and you have it. The Antonio font is built in too.
 - MIT license.
