@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- The left ribbon buttons no longer slide up under the banner when the Notebook Navigator list (or the file explorer) is scrolled.
+
 ## 0.2.0
 
 ### New
