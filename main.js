@@ -3133,10 +3133,15 @@ class LcarsObsidian extends obsidian.Plugin {
       return false;
     });
     if (!tog || !nn) return;
+    // The row scrolls with the list, so measure it as if the list sat at
+    // the top: add back how far its scroller has moved. The result is
+    // fixed to the pane (nn-navigation-pane-panel), not to the row.
+    var sc = nn.closest(".nn-navigation-pane-scroller, .nav-files-container");
+    var scrolled = sc ? sc.scrollTop : 0;
     var body = document.body;
     for (var i = 0; i < 2; i++) {
       var spacer = parseFloat(getComputedStyle(tog).borderTopWidth) || 0;
-      var delta = nn.getBoundingClientRect().top - (tog.getBoundingClientRect().top + spacer);
+      var delta = nn.getBoundingClientRect().top + scrolled - (tog.getBoundingClientRect().top + spacer);
       if (Math.abs(delta) < 0.5) break;
       var cur = parseFloat(body.style.getPropertyValue("--lcars-ribbon-nudge")) || 0;
       body.style.setProperty("--lcars-ribbon-nudge", (cur + delta).toFixed(1) + "px");
